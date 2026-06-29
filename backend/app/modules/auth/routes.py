@@ -60,7 +60,7 @@ def login(user: LoginRequest, db: Session = Depends(get_db)):
     if not db_user:
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    if not verify_password(user.password, db_user.password):
+    if not verify_password(user.password, db_user.password_hash):
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
     token = create_access_token(

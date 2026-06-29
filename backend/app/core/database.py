@@ -9,16 +9,14 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 Base = declarative_base()
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}
-)
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(
-    autocommit=False,
+    bind=engine,
     autoflush=False,
-    bind=engine
+    autocommit=False
 )
+
 
 def get_db():
     db = SessionLocal()
