@@ -7,7 +7,7 @@ from app.modules.applications.router import router as applications_router
 
 app = FastAPI()
 
-# create tables
+# create tablesss
 Base.metadata.create_all(bind=engine)
 
 # include routers
