@@ -6,7 +6,20 @@ from datetime import datetime
 class ApplicationCreate(BaseModel):
     company_name: str
     position: str
-    status: str = "Applied"
+    status: Optional[str] = "Applied"
     notes: Optional[str] = None
     resume_version: Optional[str] = None
     interview_date: Optional[datetime] = None
+
+
+class ApplicationResponse(BaseModel):
+    id: int
+    company_name: str
+    position: str
+    status: str
+    notes: Optional[str] = None
+    resume_version: Optional[str] = None
+    interview_date: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
