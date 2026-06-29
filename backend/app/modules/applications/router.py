@@ -1,12 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.application import Application
-from app.schemas.application import ApplicationCreate, ApplicationResponse
 
-router = APIRouter(prefix="/applications", tags=["Applications"])
+from app.modules.applications import service
+from app.modules.applications.schemas import (
+    ApplicationCreate,
+    ApplicationResponse,
+)
+
+router = APIRouter(
+    prefix="/applications",
+    tags=["Applications"]
+)
 
 
 # =========================
@@ -18,16 +25,11 @@ def create_application(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    app_obj = Application(
+    return service.create_application(
+        db=db,
         user_id=current_user["user_id"],
-        **data.dict()
+        data=data
     )
-
-    db.add(app_obj)
-    db.commit()
-    db.refresh(app_obj)
-
-    return app_obj
 
 
 # =========================
@@ -38,9 +40,10 @@ def get_applications(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    return db.query(Application).filter(
-        Application.user_id == current_user["user_id"]
-    ).all()
+    return service.get_applications(
+        db=db,
+        user_id=current_user["user_id"]
+    )
 
 
 # =========================
@@ -52,15 +55,11 @@ def get_application(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    app_obj = db.query(Application).filter(
-        Application.id == app_id,
-        Application.user_id == current_user["user_id"]
-    ).first()
-
-    if not app_obj:
-        raise HTTPException(status_code=404, detail="Application not found")
-
-    return app_obj
+    return service.get_application(
+        db=db,
+        app_id=app_id,
+        user_id=current_user["user_id"]
+    )
 
 
 # =========================
@@ -73,21 +72,12 @@ def update_application(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    app_obj = db.query(Application).filter(
-        Application.id == app_id,
-        Application.user_id == current_user["user_id"]
-    ).first()
-
-    if not app_obj:
-        raise HTTPException(status_code=404, detail="Application not found")
-
-    for key, value in data.dict().items():
-        setattr(app_obj, key, value)
-
-    db.commit()
-    db.refresh(app_obj)
-
-    return app_obj
+    return service.update_application(
+        db=db,
+        app_id=app_id,
+        user_id=current_user["user_id"],
+        data=data
+    )
 
 
 # =========================
@@ -99,15 +89,8 @@ def delete_application(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    app_obj = db.query(Application).filter(
-        Application.id == app_id,
-        Application.user_id == current_user["user_id"]
-    ).first()
-
-    if not app_obj:
-        raise HTTPException(status_code=404, detail="Application not found")
-
-    db.delete(app_obj)
-    db.commit()
-
-    return {"message": "Application deleted successfully"}
+    return service.delete_application(
+        db=db,
+        app_id=app_id,
+        user_id=current_user["user_id"]
+    )
