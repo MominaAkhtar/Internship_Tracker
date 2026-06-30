@@ -7,6 +7,7 @@ from app.core.security import get_current_user
 from app.modules.applications import service
 from app.modules.applications.schemas import (
     ApplicationCreate,
+    ApplicationUpdate,
     ApplicationResponse,
 )
 
@@ -68,7 +69,7 @@ def get_application(
 @router.put("/{app_id}", response_model=ApplicationResponse)
 def update_application(
     app_id: int,
-    data: ApplicationCreate,
+    data: ApplicationUpdate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):

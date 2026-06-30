@@ -11,6 +11,14 @@ class ApplicationCreate(BaseModel):
     resume_version: Optional[str] = None
     interview_date: Optional[datetime] = None
 
+class ApplicationUpdate(BaseModel):
+    company_name: Optional[str] = None
+    position: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    resume_version: Optional[str] = None
+    interview_date: Optional[datetime] = None
+
 
 class ApplicationResponse(BaseModel):
     id: int
