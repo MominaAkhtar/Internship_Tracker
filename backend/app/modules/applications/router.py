@@ -34,7 +34,7 @@ def create_application(
 
 
 # =========================
-# GET ALL (USER-SPECIFIC)
+# GET ALL
 # =========================
 @router.get("/", response_model=list[ApplicationResponse])
 def get_applications(
@@ -48,7 +48,7 @@ def get_applications(
 
 
 # =========================
-# GET SINGLE (USER-SPECIFIC)
+# GET ONE
 # =========================
 @router.get("/{app_id}", response_model=ApplicationResponse)
 def get_application(
@@ -64,7 +64,7 @@ def get_application(
 
 
 # =========================
-# UPDATE (USER-SPECIFIC)
+# UPDATE
 # =========================
 @router.put("/{app_id}", response_model=ApplicationResponse)
 def update_application(
@@ -82,7 +82,7 @@ def update_application(
 
 
 # =========================
-# DELETE (USER-SPECIFIC)
+# DELETE
 # =========================
 @router.delete("/{app_id}")
 def delete_application(
