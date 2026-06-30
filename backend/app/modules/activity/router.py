@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user
 
-from app.models.user import User
+from app.modules.auth.models import User
 
 from app.modules.activity.schemas import ActivityLogResponse
 from app.modules.activity.service import (
@@ -28,7 +28,7 @@ def get_logs(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return get_user_activity_logs(db, current_user.id)
+    return get_user_activity_logs(db, current_user["user_id"])
 
 
 @router.get(
@@ -43,7 +43,7 @@ def get_log(
     log = get_activity_log_by_id(
         db,
         log_id,
-        current_user.id
+        current_user["user_id"]
     )
 
     if not log:

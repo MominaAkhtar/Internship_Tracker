@@ -1,35 +1,39 @@
 from sqlalchemy.orm import Session
 
-from app.models.activity_log import ActivityLog
+from app.modules.activity.models import ActivityLog
 from app.modules.activity.schemas import ActivityLogCreate
 
 
 def create_activity_log(db: Session, data: ActivityLogCreate):
-    """
-    Create a new activity log entry.
-    This function will be called by other modules
-    (Applications, Notifications, etc.)
-    """
+    try:
+        log = ActivityLog(
+            user_id=data.user_id,
+            application_id=data.application_id,
+            action_type=data.action_type,
+            old_value=data.old_value,
+            new_value=data.new_value,
+            description=data.description,
+        )
 
-    log = ActivityLog(
-        user_id=data.user_id,
-        application_id=data.application_id,
-        action_type=data.action_type,
-        old_value=data.old_value,
-        new_value=data.new_value,
-        description=data.description,
-    )
+        db.add(log)
+        db.commit()
+        db.refresh(log)
 
-    db.add(log)
-    db.commit()
-    db.refresh(log)
+        return log
 
-    return log
+    except Exception as e:
+        db.rollback()
+        print("\n==============================")
+        print("ACTIVITY LOG ERROR")
+        print(type(e))
+        print(e)
+        print("==============================\n")
+        raise
 
 
 def get_user_activity_logs(db: Session, user_id: int):
     """
-    Return all activity logs belonging to a user.
+    Return all activity logs for a user.
     """
 
     return (
@@ -42,7 +46,7 @@ def get_user_activity_logs(db: Session, user_id: int):
 
 def get_activity_log_by_id(db: Session, log_id: int, user_id: int):
     """
-    Return a single activity log if it belongs to the user.
+    Return a specific activity log if it belongs to the user.
     """
 
     return (
