@@ -11,11 +11,19 @@ from app.modules.activity.service import create_activity_log
 from app.modules.activity.schemas import ActivityLogCreate
 from app.modules.activity.models import ActivityType
 
+from app.modules.notifications.service import create_notification
+from app.modules.notifications.schemas import NotificationCreate
+from app.modules.notifications.models import NotificationType
+
 
 # =========================
 # CREATE APPLICATION
 # =========================
-def create_application(db: Session, user_id: int, data: ApplicationCreate):
+def create_application(
+    db: Session,
+    user_id: int,
+    data: ApplicationCreate
+):
     new_app = Application(
         user_id=user_id,
         company_name=data.company_name,
@@ -37,6 +45,17 @@ def create_application(db: Session, user_id: int, data: ApplicationCreate):
             application_id=new_app.id,
             action_type=ActivityType.CREATE_APPLICATION,
             description=f"Created application for {new_app.company_name}"
+        )
+    )
+
+    create_notification(
+        db,
+        NotificationCreate(
+            user_id=user_id,
+            application_id=new_app.id,
+            title="Application Added",
+            message=f"Your application to {new_app.company_name} has been created.",
+            notification_type=NotificationType.APPLICATION_ADDED
         )
     )
 
@@ -123,6 +142,17 @@ def update_application(
             )
         )
 
+        create_notification(
+            db,
+            NotificationCreate(
+                user_id=user_id,
+                application_id=app_obj.id,
+                title="Application Updated",
+                message=f"Company updated to {app_obj.company_name}.",
+                notification_type=NotificationType.APPLICATION_UPDATED
+            )
+        )
+
     # Status
     if "status" in update_data:
         old = app_obj.status
@@ -137,6 +167,17 @@ def update_application(
                 old_value=old,
                 new_value=app_obj.status,
                 description=f"Status changed from '{old}' to '{app_obj.status}'"
+            )
+        )
+
+        create_notification(
+            db,
+            NotificationCreate(
+                user_id=user_id,
+                application_id=app_obj.id,
+                title="Status Changed",
+                message=f"Status changed to {app_obj.status}.",
+                notification_type=NotificationType.STATUS_CHANGED
             )
         )
 
@@ -157,7 +198,7 @@ def update_application(
             )
         )
 
-    # Resume
+    # Resume Version
     if "resume_version" in update_data:
         app_obj.resume_version = update_data["resume_version"]
 
