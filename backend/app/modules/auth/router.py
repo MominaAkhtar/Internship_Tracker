@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.schemas import RegisterRequest, LoginRequest
 from app.modules.auth import service
+from app.modules.auth.models import User
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -64,8 +65,15 @@ def login(user: LoginRequest, db: Session = Depends(get_db)):
 # =========================
 
 @router.get("/me")
-def get_me(user=Depends(get_current_user)):
+def get_me(user=Depends(get_current_user), db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.id == user["user_id"]).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
     return {
         "success": True,
-        "data": user
+        "data": {
+            "id": db_user.id,
+            "name": db_user.name,
+            "email": db_user.email
+        }
     }
