@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #eef7f9;
+  --color-primary-100: #d6ecf0;
+  --color-primary-200: #aed9e2;
+  --color-primary-300: #7ebfd0;
+  --color-primary-400: #4ba0b8;
+  --color-primary-500: #3389A0;
+  --color-primary-600: #296d81;
+  --color-primary-700: #245867;
+  --color-primary-800: #1d4855;
+  --color-primary-900: #122d36;
+
+  --color-secondary-50: #fff9f6;
+  --color-secondary-100: #fef0e7;
+  --color-secondary-200: #f7d4c1;
+  --color-secondary-300: #f1b397;
+  --color-secondary-400: #e98f6d;
+  --color-secondary-500: #e06c45;
+  --color-secondary-600: #c94f29;
+
+  --color-accent-blue: #3c91ac;
+  --color-brand-muted: #679ba9;
+
+  --color-dark-bg: #090d16;
+  --color-dark-card: #111827;
+  --color-dark-border: #1f2937;
+
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Outfit", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-gray-50 text-gray-800 dark:bg-dark-bg dark:text-gray-200;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold tracking-tight text-gray-900 dark:text-white;
+  }
+}
+
+/* Custom Scrollbar for modern design */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600;
+}
+
+/* Global transitions for theme toggles */
+.theme-transition * {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.2s ease-in-out,
+              box-shadow 0.2s ease-in-out;
+}
+
+/* Smooth Focus States for accessibility */
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 dark:ring-primary-400 ring-offset-2 dark:ring-offset-dark-bg;
+}
