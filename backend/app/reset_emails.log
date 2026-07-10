@@ -1,0 +1,30 @@
+[2026-07-08 21:32:44] Password reset link requested for faisalraima172@gmail.com:
+Link: http://localhost:5173/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJlbWFpbCI6ImZhaXNhbHJhaW1hMTcyQGdtYWlsLmNvbSIsInB1cnBvc2UiOiJyZXNldF9wYXNzd29yZCIsImV4cCI6MTc4MzUzMDE2NH0.6TU58dnljyffEbSbk7lqgxIT4mDOPQZwMZnZOHILSJM
+--------------------------------------------------
+[2026-07-08 21:33:43] Password reset link requested for faisalraima172@gmail.com:
+Link: http://localhost:5173/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJlbWFpbCI6ImZhaXNhbHJhaW1hMTcyQGdtYWlsLmNvbSIsInB1cnBvc2UiOiJyZXNldF9wYXNzd29yZCIsImV4cCI6MTc4MzUzMDIyM30.iquVSzX_TlgBwRKROQ75k9__j4bYv9II6RzT_BUx-50
+--------------------------------------------------
+[2026-07-08 21:54:02] MOCK EMAIL (No RESEND_API_KEY set) to faisalraima172@gmail.com:
+Link: http://localhost:5173/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJlbWFpbCI6ImZhaXNhbHJhaW1hMTcyQGdtYWlsLmNvbSIsInB1cnBvc2UiOiJyZXNldF9wYXNzd29yZCIsInB3ZF9oYXNoIjoiJDJiJDEyJFFXSE1IWS5nZVRhN1djLnU4azNNYnV4eEJYSEZJWXV6a3J3SU5iTHlGeE9YNGFZTGtPNXhlIiwiZXhwIjoxNzgzNTMwNTQyfQ.oJzFz1xOwa5Gr6hV2jRLNpBFS6CsaLDyGW1XSikhfHQ
+--------------------------------------------------
+[2026-07-08 23:14:55] MOCK EMAIL (No RESEND_API_KEY set) to amirameer54321@gmail.com:
+Link: http://localhost:5173/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo0LCJlbWFpbCI6ImFtaXJhbWVlcjU0MzIxQGdtYWlsLmNvbSIsInB1cnBvc2UiOiJyZXNldF9wYXNzd29yZCIsInB3ZF9oYXNoIjoiJDJiJDEyJGxkR0xqbGF6MEhwUGNKeElqdVRoZU8zRjhiYS5YRVJWc3R6S1ZhN0ZBMGlpbmIwMnVrbDltIiwiZXhwIjoxNzgzNTM1Mzk1fQ.mKmq2S_2bgL_84BtbxFStoOQZntCES6ZMZlXaFTVHts
+--------------------------------------------------
+[2026-07-08 23:16:40] MOCK EMAIL (No RESEND_API_KEY set) to fa23-bse-086@cuilahore.edu.pk:
+Link: http://localhost:5173/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo1LCJlbWFpbCI6ImZhMjMtYnNlLTA4NkBjdWlsYWhvcmUuZWR1LnBrIiwicHVycG9zZSI6InJlc2V0X3Bhc3N3b3JkIiwicHdkX2hhc2giOiIkMmIkMTIkVEVzc0dubEJ5N0Z6NmZoTFVESmkuT09OcVA0QXU2QkRHamJLQ3YxM2dIM2xTRDJrRzMzZlMiLCJleHAiOjE3ODM1MzU1MDB9.VrDqYhU_5ZzxyGPdYrwqZInB2zCQOTuKqXH4gBy1YNs
+--------------------------------------------------
+[2026-07-08 23:23:38] MOCK EMAIL (No RESEND_API_KEY set) to fa23-bse-086@cuilahore.edu.pk:
+Link: http://localhost:5173/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo1LCJlbWFpbCI6ImZhMjMtYnNlLTA4NkBjdWlsYWhvcmUuZWR1LnBrIiwicHVycG9zZSI6InJlc2V0X3Bhc3N3b3JkIiwicHdkX2hhc2giOiIkMmIkMTIkVEVzc0dubEJ5N0Z6NmZoTFVESmkuT09OcVA0QXU2QkRHamJLQ3YxM2dIM2xTRDJrRzMzZlMiLCJleHAiOjE3ODM1MzU5MTh9.Y83xyy1VYRrWCcmGeFAIN5x2zuJQovMSXSUAgsCinC4
+--------------------------------------------------
+[2026-07-08 23:24:56] MOCK EMAIL (No RESEND_API_KEY set) to raimafaisal2005@gmail.com:
+Link: http://localhost:5173/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJlbWFpbCI6InJhaW1hZmFpc2FsMjAwNUBnbWFpbC5jb20iLCJwdXJwb3NlIjoicmVzZXRfcGFzc3dvcmQiLCJwd2RfaGFzaCI6IiQyYiQxMiRKVTkvQnhxTTZRYzdBMjF6M1VOcjRlS29USVF2Wk56dTJGUVhxNjNxbjlNWDdNWFZMTlMwaSIsImV4cCI6MTc4MzUzNTk5Nn0.zEOp4WJK01Lctpepb0lz34FvsArEiXhoVu-1qzvRH9E
+--------------------------------------------------
+[2026-07-08 23:27:58] MOCK EMAIL (No RESEND_API_KEY set) to raimafaisal2005@gmail.com:
+Link: http://localhost:5173/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJlbWFpbCI6InJhaW1hZmFpc2FsMjAwNUBnbWFpbC5jb20iLCJwdXJwb3NlIjoicmVzZXRfcGFzc3dvcmQiLCJwd2RfaGFzaCI6IiQyYiQxMiRKVTkvQnhxTTZRYzdBMjF6M1VOcjRlS29USVF2Wk56dTJGUVhxNjNxbjlNWDdNWFZMTlMwaSIsImV4cCI6MTc4MzUzNjE3OH0.asdUny7HO_1vZpXHgxgX-ux6aAUjoZlEKD3WWPO4bJI
+--------------------------------------------------
+[2026-07-10 00:32:18] RESEND SEND FAILED (HTTP Error 403: Forbidden) - link for raimafaisal2005@gmail.com:
+Link: http://localhost:5173/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InJhaW1hZmFpc2FsMjAwNUBnbWFpbC5jb20iLCJwdXJwb3NlIjoicmVzZXRfcGFzc3dvcmQiLCJwd2RfaGFzaCI6IiQyYiQxMiRqaXlzZGdzaTdpWTVVZk9DaTZ1TDcuckxDLkZJdEI2Q3g4SHgwZG1EQ2YwWkxVZUNia3R5QyIsImV4cCI6MTc4MzYyNjQzOH0.vXZVmUXRg-jlB4YojchModKHUOubLx9mUaCZnuwlMVo
+--------------------------------------------------
+[2026-07-10 09:14:34] RESEND SEND FAILED (HTTP Error 403: Forbidden) - link for raimafaisal2005@gmail.com:
+Link: http://localhost:5173/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InJhaW1hZmFpc2FsMjAwNUBnbWFpbC5jb20iLCJwdXJwb3NlIjoicmVzZXRfcGFzc3dvcmQiLCJwd2RfaGFzaCI6IiQyYiQxMiRqaXlzZGdzaTdpWTVVZk9DaTZ1TDcuckxDLkZJdEI2Q3g4SHgwZG1EQ2YwWkxVZUNia3R5QyIsImV4cCI6MTc4MzY1Nzc3M30.wvNCWWK7W_h1b-mDvNIfSgfRIprfSpksea4pyxRJJ6k
+--------------------------------------------------

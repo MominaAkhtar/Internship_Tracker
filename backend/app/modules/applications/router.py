@@ -1,5 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from sqlalchemy.orm import Session
+import shutil
+import uuid
+import os
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -15,6 +18,38 @@ router = APIRouter(
     prefix="/applications",
     tags=["Applications"]
 )
+
+
+# =========================
+# UPLOAD RESUME
+# =========================
+@router.post("/upload-resume")
+def upload_resume(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    # Validate file extension
+    ext = file.filename.split(".")[-1].lower()
+    if ext not in ["pdf", "docx", "doc", "txt"]:
+        raise HTTPException(status_code=400, detail="Only document files are allowed (pdf, docx, doc, txt)")
+    
+    # Generate unique filename
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = os.path.join("uploads", "resumes", filename)
+    
+    # Save file
+    try:
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save resume file: {str(e)}")
+        
+    return {
+        "success": True,
+        "message": "Resume uploaded successfully",
+        "resume_path": f"/uploads/resumes/{filename}",
+        "original_name": file.filename
+    }
 
 
 # =========================

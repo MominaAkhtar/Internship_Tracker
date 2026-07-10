@@ -12,6 +12,7 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
+    profile_picture = Column(String, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
