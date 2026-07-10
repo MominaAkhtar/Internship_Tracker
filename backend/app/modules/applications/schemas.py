@@ -28,6 +28,7 @@ class ApplicationResponse(BaseModel):
     notes: Optional[str] = None
     resume_version: Optional[str] = None
     interview_date: Optional[datetime] = None
+    created_at: datetime
 
     class Config:
         from_attributes = True

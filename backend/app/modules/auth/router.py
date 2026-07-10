@@ -145,16 +145,13 @@ def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
         "purpose": "reset_password",
         "pwd_hash": user.password_hash
     })
-    
-    # Send actual email using the Resend service
-    try:
-        service.send_reset_email(email=user.email, name=user.name, token=token)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
-        
+
+    # No email step -- return the token directly so the frontend can open
+    # the reset-password popup immediately.
     return {
         "success": True,
-        "message": "If the email is registered, a password reset link has been sent."
+        "message": "Verified. You can reset your password now.",
+        "token": token
     }
 
 
@@ -186,4 +183,4 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
     return {
         "success": True,
         "message": "Password updated successfully"
-    }
+    }

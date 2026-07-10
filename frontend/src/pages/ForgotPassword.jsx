@@ -4,43 +4,90 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion } from 'framer-motion';
-import { KeyRound, Mail, ArrowLeft, ArrowRight } from 'lucide-react';
+import { KeyRound, Mail, ArrowLeft, ArrowRight, Lock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Tracky } from '../components/mascot/Tracky';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
+import { Modal } from '../components/common/Modal';
+import { PasswordValidationRules } from '../components/common/PasswordValidationRules';
 
 const schema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
 });
 
+const resetSchema = z.object({
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+  confirmPassword: z.string().min(1, 'Please confirm your password'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
+});
+
 export const ForgotPassword = () => {
-  const { forgotPassword } = useAuth();
+  const { forgotPassword, resetPassword } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
-  const [devToken, setDevToken] = useState('');
-  const [sent, setSent] = useState(false);
+  const [resetToken, setResetToken] = useState('');
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetSubmitting, setResetSubmitting] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
   });
 
+  const {
+    register: registerReset,
+    handleSubmit: handleResetSubmit,
+    watch: watchReset,
+    reset: resetResetForm,
+    formState: { errors: resetErrors },
+  } = useForm({ resolver: zodResolver(resetSchema) });
+
+  const watchPassword = watchReset('password', '');
+
   const onSubmit = async (data) => {
     setSubmitting(true);
     try {
       const res = await forgotPassword(data.email);
-      showToast('Password reset link generated!', 'success');
-      setSent(true);
       if (res && res.token) {
-        // Expose token for local developer testing
-        setDevToken(res.token);
+        setResetToken(res.token);
+        setShowResetModal(true);
+      } else {
+        showToast('Could not start password reset. Please try again.', 'error');
       }
     } catch (err) {
       showToast(err.response?.data?.detail || 'Failed to request password reset', 'error');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const closeResetModal = () => {
+    setShowResetModal(false);
+    setResetToken('');
+    resetResetForm();
+  };
+
+  const onResetSubmit = async (data) => {
+    if (!resetToken) return;
+    setResetSubmitting(true);
+    try {
+      await resetPassword(resetToken, data.password);
+      showToast('Password updated successfully! Please log in with your new password.', 'success');
+      closeResetModal();
+      navigate('/login');
+    } catch (err) {
+      showToast(err.response?.data?.detail || 'Failed to reset password. Please try again.', 'error');
+    } finally {
+      setResetSubmitting(false);
     }
   };
 
@@ -80,54 +127,71 @@ export const ForgotPassword = () => {
           <h2 className="text-2xl font-bold">Reset Password</h2>
         </div>
 
-        {!sent ? (
-          <>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 text-left leading-relaxed">
-              Enter your email address and we'll generate a secure reset link. 
-            </p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 text-left leading-relaxed">
+          Enter your email address to verify your account, then reset your password right here.
+        </p>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <Input
-                label="Email Address"
-                name="email"
-                placeholder="you@student.edu"
-                error={errors.email}
-                {...register('email')}
-                icon={<Mail className="w-4 h-4 text-gray-400" />}
-              />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <Input
+            label="Email Address"
+            name="email"
+            placeholder="you@student.edu"
+            error={errors.email}
+            {...register('email')}
+            icon={<Mail className="w-4 h-4 text-gray-400" />}
+          />
 
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="w-full py-3 mt-2"
-                icon={submitting ? <Tracky expression="loading" className="w-4 h-4" /> : <KeyRound className="w-4 h-4" />}
-              >
-                {submitting ? 'Generating link...' : 'Generate Reset Link'}
-              </Button>
-            </form>
-          </>
-        ) : (
-          <div className="space-y-6 text-left">
-            <div className="p-5 bg-emerald-50/40 dark:bg-emerald-950/10 border border-emerald-100/60 dark:border-emerald-900/20 rounded-2xl flex items-start gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
-              <div className="text-sm text-emerald-800 dark:text-emerald-400 leading-relaxed font-semibold">
-                Check your inbox! We have sent a secure password reset link to your email address if it is registered on OnTrack.
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">
-              If you do not receive the email within a few minutes, please check your spam folder or request a new reset link.
-            </p>
-
-            <Link
-              to="/login"
-              className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-bold border border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-border/40 transition-colors text-center cursor-pointer"
-            >
-              Back to Sign In
-            </Link>
-          </div>
-        )}
+          <Button
+            type="submit"
+            disabled={submitting}
+            className="w-full py-3 mt-2"
+            icon={submitting ? <Tracky expression="loading" className="w-4 h-4" /> : <KeyRound className="w-4 h-4" />}
+          >
+            {submitting ? 'Verifying...' : 'Continue'}
+          </Button>
+        </form>
       </motion.div>
+
+      <Modal
+        isOpen={showResetModal}
+        onClose={closeResetModal}
+        title="Set a New Password"
+        closeOnOverlayClick={false}
+      >
+        <form onSubmit={handleResetSubmit(onResetSubmit)} className="space-y-4">
+          <div className="space-y-1">
+            <Input
+              label="New Password"
+              name="password"
+              type="password"
+              placeholder="••••••••"
+              error={resetErrors.password}
+              {...registerReset('password')}
+              icon={<Lock className="w-4 h-4 text-gray-400" />}
+            />
+            <PasswordValidationRules password={watchPassword} />
+          </div>
+
+          <Input
+            label="Confirm New Password"
+            name="confirmPassword"
+            type="password"
+            placeholder="••••••••"
+            error={resetErrors.confirmPassword}
+            {...registerReset('confirmPassword')}
+            icon={<Lock className="w-4 h-4 text-gray-400" />}
+          />
+
+          <Button
+            type="submit"
+            disabled={resetSubmitting}
+            className="w-full py-3 mt-2"
+            icon={resetSubmitting ? <Tracky expression="loading" className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+          >
+            {resetSubmitting ? 'Updating password...' : 'Update Password'}
+          </Button>
+        </form>
+      </Modal>
     </div>
   );
 };
