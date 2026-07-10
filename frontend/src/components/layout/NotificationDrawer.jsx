@@ -34,6 +34,18 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (isOpen) {
+        getNotifications().then(data => setNotifications(data || []));
+      }
+    };
+    window.addEventListener('refresh-notifications-count', handleRefresh);
+    return () => {
+      window.removeEventListener('refresh-notifications-count', handleRefresh);
+    };
+  }, [isOpen]);
+
   const triggerCountUpdate = () => {
     // Notify sidebar to refresh count
     window.dispatchEvent(new CustomEvent('refresh-notifications-count'));
@@ -74,6 +86,18 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
     }
   };
 
+  // FIX #2: close the drawer and only navigate AFTER its exit animation
+  // has actually finished, instead of firing both at once. This stops the
+  // drawer's closing overlay/blur from fading out at the same time the
+  // Notifications page is fading in underneath it (that overlap is what
+  // produced the "washed out" look).
+  const handleViewAll = () => {
+    onClose();
+    setTimeout(() => {
+      navigate('/notifications');
+    }, 300); // matches the drawer's close transition duration below
+  };
+
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -90,7 +114,18 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-40 overflow-hidden">
+        // FIX #1: this was a plain <div> before. AnimatePresence only
+        // properly tracks and waits for exit animations on motion
+        // components that are its direct child — a plain div gets yanked
+        // out immediately instead of fading out cleanly.
+        <motion.div
+          key="notification-drawer-root"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-40 overflow-hidden"
+        >
           {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -188,10 +223,7 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
               {notifications.length > 0 && (
                 <div className="p-4 border-t border-gray-100 dark:border-dark-border">
                   <button
-                    onClick={() => {
-                      onClose();
-                      navigate('/notifications');
-                    }}
+                    onClick={handleViewAll}
                     className="w-full text-center py-2 text-sm font-semibold text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer"
                   >
                     View All Notifications
@@ -200,7 +232,7 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
               )}
             </motion.div>
           </div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

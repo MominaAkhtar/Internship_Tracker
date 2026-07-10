@@ -10,19 +10,23 @@ import {
   Zap, 
   Star,
   CheckCircle2,
-  ShieldAlert
+  ShieldAlert,
+  Camera
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { getDashboardSummary } from '../services/dashboard';
+import client from '../api/client';
+import { API_BASE_URL } from '../api/config';
 import { getApplications } from '../services/applications';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Tracky } from '../components/mascot/Tracky';
 
 export const Profile = () => {
-  const { user } = useAuth();
+  const { user, reloadProfile } = useAuth();
   const { showToast } = useToast();
+  const [uploading, setUploading] = useState(false);
   
   const [stats, setStats] = useState({
     total_applications: 0,
@@ -32,6 +36,37 @@ export const Profile = () => {
     rejected: 0,
   });
   const [loading, setLoading] = useState(true);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file.', 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setUploading(true);
+    try {
+      const res = await client.post('/auth/me/profile-picture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      if (res.data && res.data.success) {
+        showToast('Profile picture updated!', 'success');
+        await reloadProfile();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.detail || 'Failed to upload profile picture.', 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -104,11 +139,39 @@ export const Profile = () => {
           <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-r from-primary-500/20 to-accent-blue/10" />
 
           <div className="space-y-4 relative z-10 mt-10">
-            {/* Avatar */}
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary-400 to-secondary-200 p-[3px] shadow-md mx-auto">
-              <div className="w-full h-full rounded-full bg-white dark:bg-dark-card flex items-center justify-center overflow-hidden font-display font-black text-2xl text-primary-600">
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
-              </div>
+            {/* Avatar with image upload option */}
+            <div className="relative group w-20 h-20 rounded-full bg-gradient-to-tr from-primary-400 to-secondary-200 p-[3px] shadow-md mx-auto cursor-pointer">
+              <label className="cursor-pointer block w-full h-full rounded-full overflow-hidden relative">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageUpload} 
+                  className="hidden" 
+                  disabled={uploading} 
+                />
+                
+                <div className="w-full h-full bg-white dark:bg-dark-card flex items-center justify-center overflow-hidden font-display font-black text-2xl text-primary-600">
+                  {user?.profile_picture ? (
+                    <img 
+                      src={`${API_BASE_URL}${user.profile_picture}`} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <span className={user?.profile_picture ? "hidden" : "flex w-full h-full items-center justify-center"}>
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  </span>
+                </div>
+                
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="w-5 h-5 text-white" />
+                </div>
+              </label>
             </div>
 
             <div>

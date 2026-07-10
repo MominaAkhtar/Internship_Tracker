@@ -1,7 +1,7 @@
 import os
 import bcrypt
 from datetime import datetime, timedelta
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -43,9 +43,19 @@ def create_access_token(data: dict):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
+def create_reset_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
 def decode_token(token: str):
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except ExpiredSignatureError:
+        return "expired"
     except JWTError:
         return None
 
@@ -62,7 +72,7 @@ def get_current_user(
     payload = decode_token(token)
     print(payload)
 
-    if not payload:
+    if not payload or payload == "expired":
         raise HTTPException(status_code=401, detail="Invalid token")
 
     return payload

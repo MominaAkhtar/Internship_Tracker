@@ -47,13 +47,13 @@ export const Tracky = ({ expression = 'happy', className = 'w-24 h-24' }) => {
             animate="animate"
             aria-label="Tracky waving"
           >
-            {/* Body */}
-            <circle cx="50" cy="55" r="30" className="fill-primary-500" />
-            <circle cx="50" cy="58" r="20" className="fill-secondary-200" />
+            {/* Boxy Body */}
+            <rect x="20" y="25" width="60" height="60" rx="14" ry="14" className="fill-primary-500" />
+            <rect x="30" y="38" width="40" height="38" rx="8" ry="8" className="fill-secondary-200" />
             
-            {/* Feet */}
-            <ellipse cx="38" cy="83" rx="8" ry="4" className="fill-primary-600" />
-            <ellipse cx="62" cy="83" rx="8" ry="4" className="fill-primary-600" />
+            {/* Boxy Feet */}
+            <rect x="30" y="81" width="16" height="6" rx="3" className="fill-primary-600" />
+            <rect x="54" y="81" width="16" height="6" rx="3" className="fill-primary-600" />
             
             {/* Left Arm (idle) */}
             <path d="M22,58 Q15,62 20,68" strokeWidth="6" strokeLinecap="round" className="stroke-primary-500 fill-none" />
@@ -91,11 +91,13 @@ export const Tracky = ({ expression = 'happy', className = 'w-24 h-24' }) => {
             animate="animate"
             aria-label="Tracky happy"
           >
-            <circle cx="50" cy="55" r="30" className="fill-primary-500" />
-            <circle cx="50" cy="58" r="20" className="fill-secondary-200" />
+            {/* Boxy Body */}
+            <rect x="20" y="25" width="60" height="60" rx="14" ry="14" className="fill-primary-500" />
+            <rect x="30" y="38" width="40" height="38" rx="8" ry="8" className="fill-secondary-200" />
             
-            <ellipse cx="38" cy="83" rx="8" ry="4" className="fill-primary-600" />
-            <ellipse cx="62" cy="83" rx="8" ry="4" className="fill-primary-600" />
+            {/* Boxy Feet */}
+            <rect x="30" y="81" width="16" height="6" rx="3" className="fill-primary-600" />
+            <rect x="54" y="81" width="16" height="6" rx="3" className="fill-primary-600" />
             
             {/* Arms */}
             <path d="M22,58 Q14,64 22,70" strokeWidth="6" strokeLinecap="round" className="stroke-primary-500 fill-none" />
@@ -122,11 +124,13 @@ export const Tracky = ({ expression = 'happy', className = 'w-24 h-24' }) => {
             animate="animate"
             aria-label="Tracky thinking"
           >
-            <circle cx="50" cy="55" r="30" className="fill-primary-500" />
-            <circle cx="50" cy="58" r="20" className="fill-secondary-200" />
+            {/* Boxy Body */}
+            <rect x="20" y="25" width="60" height="60" rx="14" ry="14" className="fill-primary-500" />
+            <rect x="30" y="38" width="40" height="38" rx="8" ry="8" className="fill-secondary-200" />
             
-            <ellipse cx="38" cy="83" rx="8" ry="4" className="fill-primary-600" />
-            <ellipse cx="62" cy="83" rx="8" ry="4" className="fill-primary-600" />
+            {/* Boxy Feet */}
+            <rect x="30" y="81" width="16" height="6" rx="3" className="fill-primary-600" />
+            <rect x="54" y="81" width="16" height="6" rx="3" className="fill-primary-600" />
             
             {/* Left Arm (thinking scratch) */}
             <motion.path
@@ -154,8 +158,8 @@ export const Tracky = ({ expression = 'happy', className = 'w-24 h-24' }) => {
 
             {/* Floating Question Mark */}
             <motion.text
-              x="70"
-              y="25"
+              x="72"
+              y="23"
               fill="#F7D4C1"
               fontSize="16"
               fontWeight="bold"
@@ -177,11 +181,13 @@ export const Tracky = ({ expression = 'happy', className = 'w-24 h-24' }) => {
             animate="animate"
             aria-label="Tracky sleeping"
           >
-            <circle cx="50" cy="55" r="30" className="fill-primary-500 opacity-90" />
-            <circle cx="50" cy="58" r="20" className="fill-secondary-200 opacity-90" />
+            {/* Boxy Body */}
+            <rect x="20" y="25" width="60" height="60" rx="14" ry="14" className="fill-primary-500 opacity-90" />
+            <rect x="30" y="38" width="40" height="38" rx="8" ry="8" className="fill-secondary-200 opacity-90" />
             
-            <ellipse cx="38" cy="83" rx="8" ry="4" className="fill-primary-600 opacity-90" />
-            <ellipse cx="62" cy="83" rx="8" ry="4" className="fill-primary-600 opacity-90" />
+            {/* Boxy Feet */}
+            <rect x="30" y="81" width="16" height="6" rx="3" className="fill-primary-600 opacity-90" />
+            <rect x="54" y="81" width="16" height="6" rx="3" className="fill-primary-600 opacity-90" />
             
             {/* Arms resting */}
             <path d="M22,62 Q30,68 38,62" strokeWidth="5.5" strokeLinecap="round" className="stroke-primary-600/70 fill-none" />
@@ -230,22 +236,24 @@ export const Tracky = ({ expression = 'happy', className = 'w-24 h-24' }) => {
             <polygon points="50,10 40,28 60,28" className="fill-secondary-500" />
             <circle cx="50" cy="9" r="3.5" className="fill-yellow-400" />
 
-            <circle cx="50" cy="58" r="30" className="fill-primary-500" />
-            <circle cx="50" cy="61" r="20" className="fill-secondary-200" />
+            {/* Boxy Body */}
+            <rect x="20" y="28" width="60" height="60" rx="14" ry="14" className="fill-primary-500" />
+            <rect x="30" y="41" width="40" height="38" rx="8" ry="8" className="fill-secondary-200" />
             
-            <ellipse cx="38" cy="86" rx="8" ry="4" className="fill-primary-600" />
-            <ellipse cx="62" cy="86" rx="8" ry="4" className="fill-primary-600" />
+            {/* Boxy Feet */}
+            <rect x="30" y="84" width="16" height="6" rx="3" className="fill-primary-600" />
+            <rect x="54" y="84" width="16" height="6" rx="3" className="fill-primary-600" />
             
             {/* Arms raised */}
-            <path d="M22,55 Q12,42 16,36" strokeWidth="6" strokeLinecap="round" className="stroke-primary-500 fill-none" />
-            <path d="M78,55 Q88,42 84,36" strokeWidth="6" strokeLinecap="round" className="stroke-primary-500 fill-none" />
+            <path d="M22,58 Q12,45 16,39" strokeWidth="6" strokeLinecap="round" className="stroke-primary-500 fill-none" />
+            <path d="M78,58 Q88,45 84,39" strokeWidth="6" strokeLinecap="round" className="stroke-primary-500 fill-none" />
 
             {/* Happy eyes */}
-            <path d="M38,48 Q44,42 50,48" strokeWidth="3" strokeLinecap="round" className="stroke-white fill-none" />
-            <path d="M54,48 Q60,42 66,48" strokeWidth="3" strokeLinecap="round" className="stroke-white fill-none" />
+            <path d="M38,51 Q44,45 50,51" strokeWidth="3" strokeLinecap="round" className="stroke-white fill-none" />
+            <path d="M54,51 Q60,45 66,51" strokeWidth="3" strokeLinecap="round" className="stroke-white fill-none" />
 
             {/* Big Smiling Mouth */}
-            <ellipse cx="50" cy="57" rx="6" ry="4" fill="white" />
+            <ellipse cx="50" cy="60" rx="6" ry="4" fill="white" />
 
             {/* Confetti particles */}
             <motion.circle cx="20" cy="25" r="2" fill="#F7D4C1" animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2 }} />
@@ -262,11 +270,13 @@ export const Tracky = ({ expression = 'happy', className = 'w-24 h-24' }) => {
             animate="animate"
             aria-label="Tracky sad"
           >
-            <circle cx="50" cy="55" r="30" className="fill-primary-600" />
-            <circle cx="50" cy="58" r="20" className="fill-slate-200 dark:fill-slate-800" />
+            {/* Boxy Body */}
+            <rect x="20" y="25" width="60" height="60" rx="14" ry="14" className="fill-primary-600" />
+            <rect x="30" y="38" width="40" height="38" rx="8" ry="8" className="fill-slate-200 dark:fill-slate-800" />
             
-            <ellipse cx="38" cy="83" rx="8" ry="4" className="fill-primary-700" />
-            <ellipse cx="62" cy="83" rx="8" ry="4" className="fill-primary-700" />
+            {/* Boxy Feet */}
+            <rect x="30" y="81" width="16" height="6" rx="3" className="fill-primary-700" />
+            <rect x="54" y="81" width="16" height="6" rx="3" className="fill-primary-700" />
             
             {/* Arms down drooping */}
             <path d="M22,60 Q15,72 20,78" strokeWidth="6" strokeLinecap="round" className="stroke-primary-600 fill-none" />
@@ -306,11 +316,13 @@ export const Tracky = ({ expression = 'happy', className = 'w-24 h-24' }) => {
             transition={{ repeat: Infinity, duration: 0.6, ease: 'easeInOut' }}
             aria-label="Tracky excited"
           >
-            <circle cx="50" cy="55" r="30" className="fill-primary-500" />
-            <circle cx="50" cy="58" r="20" className="fill-secondary-200" />
+            {/* Boxy Body */}
+            <rect x="20" y="25" width="60" height="60" rx="14" ry="14" className="fill-primary-500" />
+            <rect x="30" y="38" width="40" height="38" rx="8" ry="8" className="fill-secondary-200" />
             
-            <ellipse cx="38" cy="83" rx="8" ry="4" className="fill-primary-600" />
-            <ellipse cx="62" cy="83" rx="8" ry="4" className="fill-primary-600" />
+            {/* Boxy Feet */}
+            <rect x="30" y="81" width="16" height="6" rx="3" className="fill-primary-600" />
+            <rect x="54" y="81" width="16" height="6" rx="3" className="fill-primary-600" />
             
             {/* Arms out shaking */}
             <path d="M22,55 Q10,50 18,42" strokeWidth="6" strokeLinecap="round" className="stroke-primary-500 fill-none" />
@@ -338,11 +350,13 @@ export const Tracky = ({ expression = 'happy', className = 'w-24 h-24' }) => {
             animate="animate"
             aria-label="Tracky confused"
           >
-            <circle cx="50" cy="55" r="30" className="fill-primary-500" />
-            <circle cx="50" cy="58" r="20" className="fill-secondary-200" />
+            {/* Boxy Body */}
+            <rect x="20" y="25" width="60" height="60" rx="14" ry="14" className="fill-primary-500" />
+            <rect x="30" y="38" width="40" height="38" rx="8" ry="8" className="fill-secondary-200" />
             
-            <ellipse cx="38" cy="83" rx="8" ry="4" className="fill-primary-600" />
-            <ellipse cx="62" cy="83" rx="8" ry="4" className="fill-primary-600" />
+            {/* Boxy Feet */}
+            <rect x="30" y="81" width="16" height="6" rx="3" className="fill-primary-600" />
+            <rect x="54" y="81" width="16" height="6" rx="3" className="fill-primary-600" />
             
             {/* Arms: one up, one down */}
             <path d="M22,60 Q18,72 24,78" strokeWidth="6" strokeLinecap="round" className="stroke-primary-500 fill-none" />
@@ -383,20 +397,23 @@ export const Tracky = ({ expression = 'happy', className = 'w-24 h-24' }) => {
             transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
             aria-label="Tracky loading"
           >
-            {/* Ring body */}
-            <circle cx="50" cy="50" r="30" fill="none" strokeWidth="6" className="stroke-gray-200 dark:stroke-gray-800" />
-            <circle
-              cx="50"
-              cy="50"
-              r="30"
+            {/* Boxy Ring body */}
+            <rect x="20" y="20" width="60" height="60" rx="14" ry="14" fill="none" strokeWidth="6" className="stroke-gray-200 dark:stroke-gray-800" />
+            <motion.rect
+              x="20"
+              y="20"
+              width="60"
+              height="60"
+              rx="14"
+              ry="14"
               fill="none"
               strokeWidth="6"
               className="stroke-primary-500"
-              strokeDasharray="188.4"
-              strokeDashoffset="120"
+              strokeDasharray="240"
+              strokeDashoffset="140"
             />
             {/* Small tracking core */}
-            <circle cx="50" cy="50" r="10" className="fill-secondary-200" />
+            <rect x="42" y="42" width="16" height="16" rx="4" ry="4" className="fill-secondary-200" />
           </motion.svg>
         );
     }
@@ -404,4 +421,5 @@ export const Tracky = ({ expression = 'happy', className = 'w-24 h-24' }) => {
 
   return <div className="flex items-center justify-center">{renderExpression()}</div>;
 };
+
 export default Tracky;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Trash2, CheckCircle, Eye, EyeOff, Search } from 'lucide-react';
 import { 
@@ -16,7 +16,6 @@ import { Tracky } from '../components/mascot/Tracky';
 export const Notifications = () => {
   const { showToast } = useToast();
   const [notifications, setNotifications] = useState([]);
-  const [filteredNotifications, setFilteredNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // Search & Filter state
@@ -37,11 +36,27 @@ export const Notifications = () => {
 
   useEffect(() => {
     fetchNotifications();
+
+    const handleRefresh = () => {
+      getNotifications().then(data => setNotifications(data || []));
+    };
+    window.addEventListener('refresh-notifications-count', handleRefresh);
+
+    return () => {
+      window.removeEventListener('refresh-notifications-count', handleRefresh);
+    };
   }, []);
 
-  useEffect(() => {
+  // FIX: compute the filtered list directly during render instead of via
+  // useEffect + separate state. The old version needed an extra render
+  // pass every time `filter` changed (click -> render with stale list ->
+  // effect runs -> render again with correct list), and that lag is what
+  // let the card fade animation get caught mid-transition and freeze in
+  // a half-opacity "washed out" state, especially when switching tabs
+  // quickly. useMemo recalculates in the same render, so there's no gap.
+  const filteredNotifications = useMemo(() => {
     let result = [...notifications];
-    
+
     // Filter
     if (filter === 'Unread') {
       result = result.filter(n => !n.is_read);
@@ -53,13 +68,13 @@ export const Notifications = () => {
     if (search.trim() !== '') {
       const q = search.toLowerCase();
       result = result.filter(
-        n => 
-          n.title.toLowerCase().includes(q) || 
+        n =>
+          n.title.toLowerCase().includes(q) ||
           n.message.toLowerCase().includes(q)
       );
     }
 
-    setFilteredNotifications(result);
+    return result;
   }, [notifications, filter, search]);
 
   const triggerSidebarUpdate = () => {
@@ -156,17 +171,18 @@ export const Notifications = () => {
           className="space-y-3"
         >
           <AnimatePresence mode="popLayout">
-            {filteredNotifications.map(n => (
+             {filteredNotifications.map(n => (
               <motion.div
                 key={n.id}
                 layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className={`p-5 rounded-3xl border text-left flex items-start gap-4 transition-all relative overflow-hidden group ${
+                onClick={() => !n.is_read && handleMarkRead(n.id)}
+                className={`p-4 rounded-xl border text-left flex items-start gap-4 transition-all relative overflow-hidden group ${
                   n.is_read
-                    ? 'bg-white/60 border-gray-100 dark:bg-dark-card dark:border-dark-border text-gray-500'
-                    : 'bg-white border-primary-100 dark:bg-dark-card dark:border-primary-950/20 shadow-md text-gray-800 dark:text-gray-200'
+                    ? 'bg-white border-gray-100 text-gray-650 dark:bg-dark-card dark:border-dark-border dark:text-gray-400'
+                    : 'bg-primary-50/20 border-primary-100 text-gray-800 dark:bg-primary-950/10 dark:border-primary-900/30 dark:text-gray-250 shadow-xs cursor-pointer hover:bg-primary-50/30 dark:hover:bg-primary-950/15'
                 }`}
               >
                 {/* Active Indicator Bar */}
@@ -175,30 +191,37 @@ export const Notifications = () => {
                 )}
 
                 {/* Left icon status */}
-                <div className={`p-2.5 rounded-2xl flex-shrink-0 mt-0.5 ${
+                <div className={`p-2 rounded-lg flex-shrink-0 mt-0.5 ${
                   n.is_read 
                     ? 'bg-gray-100 dark:bg-dark-border text-gray-400' 
                     : 'bg-primary-50 text-primary-500 dark:bg-primary-950/40 dark:text-primary-400'
                 }`}>
-                  <Bell className="w-5 h-5" />
+                  <Bell className="w-4 h-4" />
                 </div>
 
                 <div className="flex-grow min-w-0">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <h3 className="font-bold text-sm leading-snug">{n.title}</h3>
-                    <span className="text-[10px] text-gray-400 font-semibold">
+                    <h3 className={`font-semibold text-sm leading-snug ${
+                      n.is_read ? 'text-gray-500 dark:text-gray-400 font-medium' : 'text-gray-900 dark:text-white font-bold'
+                    }`}>{n.title}</h3>
+                    <span className="text-[10px] text-gray-400 font-medium">
                       {new Date(n.created_at).toLocaleString()}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed font-semibold">
+                  <p className={`text-xs mt-1 leading-relaxed font-normal ${
+                    n.is_read ? 'text-gray-500 dark:text-gray-450' : 'text-gray-700 dark:text-gray-300'
+                  }`}>
                     {n.message}
                   </p>
                   
                   {/* Mark Read CTA overlay */}
                   {!n.is_read && (
                     <button
-                      onClick={() => handleMarkRead(n.id)}
-                      className="text-[10px] text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 font-bold flex items-center gap-1 mt-3 hover:underline cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMarkRead(n.id);
+                      }}
+                      className="text-[10px] text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 font-bold flex items-center gap-1 mt-2 hover:underline cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5" /> Mark as Read
                     </button>
@@ -207,8 +230,11 @@ export const Notifications = () => {
 
                 {/* Right controls */}
                 <button
-                  onClick={() => handleDelete(n.id)}
-                  className="text-gray-300 hover:text-rose-500 dark:hover:text-rose-400 p-2 rounded-xl border border-transparent hover:border-gray-100 dark:hover:border-dark-border/50 hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-all cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(n.id);
+                  }}
+                  className="text-gray-300 hover:text-rose-500 dark:hover:text-rose-400 p-1.5 rounded-xl border border-transparent hover:border-gray-100 dark:hover:border-dark-border/50 hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-all cursor-pointer flex-shrink-0"
                   title="Delete notification"
                 >
                   <Trash2 className="w-4 h-4" />

@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Calendar, MapPin, FileText, AlignLeft } from 'lucide-react';
+import { ArrowLeft, Save, Calendar, MapPin, FileText, AlignLeft, Upload, Paperclip } from 'lucide-react';
 import { getApplication, updateApplication } from '../services/applications';
 import { serializeNotes, deserializeNotes } from '../utils/notesParser';
 import { useToast } from '../context/ToastContext';
+import client from '../api/client';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
 import { Tracky } from '../components/mascot/Tracky';
+import { DateTimePicker } from '../components/common/DateTimePicker';
 
 const schema = z.object({
   company_name: z.string().min(1, 'Company name is required'),
@@ -29,8 +31,44 @@ export const EditApplication = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [resumePath, setResumePath] = useState('');
+  const [resumeName, setResumeName] = useState('');
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['pdf', 'docx', 'doc', 'txt'].includes(ext)) {
+      showToast('Please select a valid document file (pdf, docx, doc, txt).', 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setUploadingResume(true);
+    try {
+      const res = await client.post('/applications/upload-resume', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      if (res.data && res.data.resume_path) {
+        setResumePath(res.data.resume_path);
+        setResumeName(res.data.original_name);
+        showToast('Resume uploaded successfully!', 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.detail || 'Failed to upload resume.', 'error');
+    } finally {
+      setUploadingResume(false);
+    }
+  };
+
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
   });
 
@@ -40,6 +78,10 @@ export const EditApplication = () => {
         const data = await getApplication(id);
         if (data) {
           const parsed = deserializeNotes(data.notes);
+          if (data.resume_version) {
+            setResumePath(data.resume_version);
+            setResumeName(data.resume_version.split('/').pop());
+          }
           reset({
             company_name: data.company_name,
             position: data.position,
@@ -47,7 +89,7 @@ export const EditApplication = () => {
             location: parsed.location,
             priority: parsed.priority,
             resume_version: data.resume_version || '',
-            interview_date: data.interview_date ? new Date(data.interview_date).toISOString().slice(0, 16) : '',
+            interview_date: data.interview_date ? new Date(data.interview_date).toISOString() : '',
             notes: parsed.notes,
           });
         }
@@ -75,7 +117,7 @@ export const EditApplication = () => {
         position: data.position,
         status: data.status,
         notes: combinedNotes,
-        resume_version: data.resume_version || null,
+        resume_version: resumePath || data.resume_version || null,
         interview_date: data.interview_date ? new Date(data.interview_date).toISOString() : null,
       };
 
@@ -180,22 +222,50 @@ export const EditApplication = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Resume / Cover Letter Version"
-              name="resume_version"
-              placeholder="e.g. Resume_v3"
-              error={errors.resume_version}
-              {...register('resume_version')}
-              icon={<FileText className="w-4 h-4 text-gray-400" />}
-            />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Upload Resume (PDF, DOCX, DOC, TXT)
+              </label>
+              <div className="relative flex items-center justify-center border border-dashed border-gray-200 dark:border-dark-border hover:border-primary-500 dark:hover:border-primary-400 rounded-xl p-2.5 bg-gray-50/50 dark:bg-dark-border/10 transition-all h-[42px]">
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.doc,.txt"
+                  onChange={handleResumeUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  disabled={uploadingResume}
+                />
+                <div className="flex items-center gap-1.5 text-center pointer-events-none select-none">
+                  {uploadingResume ? (
+                    <span className="flex items-center gap-2 text-primary-600 dark:text-primary-400 font-bold text-xs">
+                      Uploading...
+                    </span>
+                  ) : resumePath ? (
+                    <span className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                      <Paperclip className="w-3.5 h-3.5" />
+                      {resumeName}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2 text-gray-400 dark:text-gray-500 font-bold text-xs">
+                      <Upload className="w-3.5 h-3.5" />
+                      Choose file or drag here
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
 
-            <Input
-              label="Interview Date & Time"
+            <Controller
               name="interview_date"
-              type="datetime-local"
-              error={errors.interview_date}
-              {...register('interview_date')}
-              icon={<Calendar className="w-4 h-4 text-gray-400" />}
+              control={control}
+              render={({ field }) => (
+                <DateTimePicker
+                  label="Interview Date & Time"
+                  name="interview_date"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.interview_date}
+                />
+              )}
             />
           </div>
 

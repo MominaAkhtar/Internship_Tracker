@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getNotificationCount } from '../../services/notifications';
+import { API_BASE_URL } from '../../api/config';
 
 export const Sidebar = ({ isCollapsed, setIsCollapsed, onOpenNotificationsDrawer }) => {
   const { user, logoutUser } = useAuth();
@@ -34,7 +35,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, onOpenNotificationsDrawer
         const res = await getNotificationCount();
         // Backend returns raw count dict or integer
         if (res && typeof res === 'object') {
-          setUnreadCount(res.count || 0);
+          setUnreadCount(res.unread !== undefined ? res.unread : (res.count || 0));
         } else if (typeof res === 'number') {
           setUnreadCount(res);
         }
@@ -141,7 +142,20 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, onOpenNotificationsDrawer
         <div className="relative flex-shrink-0">
           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary-400 to-secondary-200 p-[2px] shadow-sm">
             <div className="w-full h-full rounded-full bg-white dark:bg-dark-card flex items-center justify-center overflow-hidden font-display font-bold text-primary-600">
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
+              {user?.profile_picture ? (
+                <img 
+                  src={`${API_BASE_URL}${user.profile_picture}`} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover" 
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <span className={user?.profile_picture ? "hidden" : "flex w-full h-full items-center justify-center"}>
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </span>
             </div>
           </div>
           <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-dark-card" />

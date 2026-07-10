@@ -19,6 +19,7 @@ import { useToast } from '../context/ToastContext';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { Tracky } from '../components/mascot/Tracky';
+import { API_BASE_URL } from '../api/config';
 
 export const ViewApplication = () => {
   const { id } = useParams();
@@ -183,10 +184,24 @@ export const ViewApplication = () => {
               <div className="flex items-start gap-3">
                 <FileText className="w-4 h-4 text-gray-400 mt-1" />
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Resume Version</span>
-                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                    {app.resume_version || 'Not Specified'}
-                  </span>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Resume</span>
+                  {app.resume_version ? (
+                    app.resume_version.startsWith('/uploads/') ? (
+                      <a 
+                        href={`${API_BASE_URL}${app.resume_version}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1 mt-0.5"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        View / Download
+                      </a>
+                    ) : (
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{app.resume_version}</span>
+                    )
+                  ) : (
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Not Specified</span>
+                  )}
                 </div>
               </div>
 

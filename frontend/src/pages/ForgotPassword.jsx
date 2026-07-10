@@ -108,40 +108,23 @@ export const ForgotPassword = () => {
           </>
         ) : (
           <div className="space-y-6 text-left">
-            <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/30 rounded-2xl flex items-start gap-3">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
-              <div className="text-sm text-emerald-800 dark:text-emerald-400 leading-relaxed font-medium">
-                Reset link generated successfully! If you are in local testing, check the <code className="text-xs bg-emerald-100/50 dark:bg-emerald-900/30 px-1 py-0.5 rounded">reset_emails.log</code> file in the backend folder.
+            <div className="p-5 bg-emerald-50/40 dark:bg-emerald-950/10 border border-emerald-100/60 dark:border-emerald-900/20 rounded-2xl flex items-start gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
+              <div className="text-sm text-emerald-800 dark:text-emerald-400 leading-relaxed font-semibold">
+                Check your inbox! We have sent a secure password reset link to your email address if it is registered on OnTrack.
               </div>
             </div>
 
-            {devToken && (
-              <div className="p-5 border border-primary-100 dark:border-primary-900/20 bg-primary-50/10 dark:bg-primary-950/5 rounded-2xl space-y-3">
-                <span className="text-xs uppercase tracking-wider font-bold text-primary-500 block">
-                  Local Developer Testing Shortcut
-                </span>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  We detected a reset token in the API response. You can bypass the email logs and click below to test the reset immediately:
-                </p>
-                <Button
-                  onClick={() => navigate(`/reset-password?token=${devToken}`)}
-                  variant="secondary"
-                  size="sm"
-                  className="w-full justify-between"
-                  icon={<ArrowRight className="w-4 h-4" />}
-                >
-                  Go to password reset page
-                </Button>
-              </div>
-            )}
+            <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">
+              If you do not receive the email within a few minutes, please check your spam folder or request a new reset link.
+            </p>
 
-            <Button
-              onClick={() => { setSent(false); setDevToken(''); }}
-              variant="outline"
-              className="w-full"
+            <Link
+              to="/login"
+              className="w-full inline-flex items-center justify-center py-2.5 rounded-xl text-xs font-bold border border-gray-200 dark:border-dark-border text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-border/40 transition-colors text-center cursor-pointer"
             >
-              Request Another Link
-            </Button>
+              Back to Sign In
+            </Link>
           </div>
         )}
       </motion.div>
