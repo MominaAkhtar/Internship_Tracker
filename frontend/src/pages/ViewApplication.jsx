@@ -230,7 +230,7 @@ export const ViewApplication = () => {
           {/* Interactive mascot panel inside view */}
           <div className="p-4 bg-primary-50/50 dark:bg-primary-950/10 rounded-2xl border border-primary-100/30 flex items-center gap-3">
             <Tracky expression={app.status === 'Offered' ? 'celebrating' : 'thinking'} className="w-12 h-12 flex-shrink-0" />
-            <p className="text-xs font-semibold text-primary-700 dark:text-primary-400 leading-snug">
+            <p className="text-xs font-semibold text-primary-700 dark:text-primary-200 leading-snug">
               {app.status === 'Offered' ? "Woohoo! Keep track of your onboarding timeline." : "Remember to follow up 3-5 days after your interview!"}
             </p>
           </div>

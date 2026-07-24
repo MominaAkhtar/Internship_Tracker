@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Calendar, MapPin, FileText, AlignLeft, Upload, Paperclip } from 'lucide-react';
+import { ArrowLeft, MapPin, AlignLeft, Upload, Paperclip } from 'lucide-react';
 import { getApplication, updateApplication } from '../services/applications';
 import { serializeNotes, deserializeNotes } from '../utils/notesParser';
 import { useToast } from '../context/ToastContext';
@@ -30,10 +30,159 @@ export const EditApplication = () => {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
   const [resumePath, setResumePath] = useState('');
   const [resumeName, setResumeName] = useState('');
+
+  const lastSavedValuesRef = useRef({});
+  const pendingUpdatesRef = useRef({});
+  const isSavingRef = useRef(false);
+  const debounceTimeoutRefs = useRef({});
+  const saveSuccessTimeoutRef = useRef(null);
+
+  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
+  const [saveError, setSaveError] = useState('');
+
+  const isDifferent = (a, b) => {
+    if (a === undefined) a = '';
+    if (b === undefined) b = '';
+    if (a === null) a = '';
+    if (b === null) b = '';
+    return String(a).trim() !== String(b).trim();
+  };
+
+  const processSaveQueue = async () => {
+    if (isSavingRef.current) {
+      return;
+    }
+
+    const updates = { ...pendingUpdatesRef.current };
+    if (Object.keys(updates).length === 0) {
+      return;
+    }
+
+    isSavingRef.current = true;
+    setSaveStatus('saving');
+    setSaveError('');
+
+    // Clear the keys we are about to process
+    for (const key of Object.keys(updates)) {
+      delete pendingUpdatesRef.current[key];
+    }
+
+    try {
+      const payload = {};
+      let hasNotesUpdate = false;
+
+      if ('company_name' in updates && isDifferent(updates.company_name, lastSavedValuesRef.current.company_name)) {
+        payload.company_name = updates.company_name;
+      }
+      if ('position' in updates && isDifferent(updates.position, lastSavedValuesRef.current.position)) {
+        payload.position = updates.position;
+      }
+      if ('status' in updates && isDifferent(updates.status, lastSavedValuesRef.current.status)) {
+        payload.status = updates.status;
+      }
+      if ('interview_date' in updates) {
+        const oldDate = lastSavedValuesRef.current.interview_date;
+        const newDate = updates.interview_date;
+        if (isDifferent(newDate, oldDate)) {
+          payload.interview_date = newDate ? new Date(newDate).toISOString() : null;
+        }
+      }
+      if ('resume_version' in updates && isDifferent(updates.resume_version, lastSavedValuesRef.current.resume_version)) {
+        payload.resume_version = updates.resume_version;
+      }
+
+      if ('location' in updates || 'priority' in updates || 'notes' in updates) {
+        const currentLoc = 'location' in updates ? updates.location : getValues('location');
+        const currentPriority = 'priority' in updates ? updates.priority : getValues('priority');
+        const currentNotesText = 'notes' in updates ? updates.notes : getValues('notes');
+
+        const oldLoc = lastSavedValuesRef.current.location;
+        const oldPriority = lastSavedValuesRef.current.priority;
+        const oldNotesText = lastSavedValuesRef.current.notes;
+
+        if (isDifferent(currentLoc, oldLoc) || isDifferent(currentPriority, oldPriority) || isDifferent(currentNotesText, oldNotesText)) {
+          payload.notes = serializeNotes({
+            location: currentLoc || 'Remote',
+            priority: currentPriority || 'Medium',
+            notes: currentNotesText || ''
+          });
+          hasNotesUpdate = true;
+        }
+      }
+
+      if (Object.keys(payload).length > 0) {
+        await updateApplication(id, payload);
+
+        // Update lastSavedValuesRef.current
+        if ('company_name' in payload) lastSavedValuesRef.current.company_name = payload.company_name;
+        if ('position' in payload) lastSavedValuesRef.current.position = payload.position;
+        if ('status' in payload) lastSavedValuesRef.current.status = payload.status;
+        if ('interview_date' in payload) lastSavedValuesRef.current.interview_date = payload.interview_date ? new Date(payload.interview_date).toISOString() : '';
+        if ('resume_version' in payload) lastSavedValuesRef.current.resume_version = payload.resume_version;
+        if (hasNotesUpdate) {
+          lastSavedValuesRef.current.location = 'location' in updates ? updates.location : getValues('location');
+          lastSavedValuesRef.current.priority = 'priority' in updates ? updates.priority : getValues('priority');
+          lastSavedValuesRef.current.notes = 'notes' in updates ? updates.notes : getValues('notes');
+        }
+
+        setSaveStatus('saved');
+
+        if (saveSuccessTimeoutRef.current) {
+          clearTimeout(saveSuccessTimeoutRef.current);
+        }
+        saveSuccessTimeoutRef.current = setTimeout(() => {
+          setSaveStatus('idle');
+        }, 3000);
+      } else {
+        setSaveStatus('idle');
+      }
+    } catch (err) {
+      console.error(err);
+      setSaveStatus('error');
+      setSaveError(err.response?.data?.detail || 'Failed to save changes. Please try again.');
+    } finally {
+      isSavingRef.current = false;
+      if (Object.keys(pendingUpdatesRef.current).length > 0) {
+        processSaveQueue();
+      }
+    }
+  };
+
+  const enqueueUpdate = async (name, value) => {
+    const isValid = await trigger(name);
+    if (!isValid) return;
+
+    if (!isDifferent(value, lastSavedValuesRef.current[name])) {
+      return;
+    }
+
+    pendingUpdatesRef.current[name] = value;
+    processSaveQueue();
+  };
+
+  const handleFieldChange = (name, value) => {
+    if (!isDifferent(value, lastSavedValuesRef.current[name])) {
+      if (debounceTimeoutRefs.current[name]) {
+        clearTimeout(debounceTimeoutRefs.current[name]);
+        delete debounceTimeoutRefs.current[name];
+      }
+      return;
+    }
+
+    if (['company_name', 'position', 'location', 'notes'].includes(name)) {
+      if (debounceTimeoutRefs.current[name]) {
+        clearTimeout(debounceTimeoutRefs.current[name]);
+      }
+      debounceTimeoutRefs.current[name] = setTimeout(() => {
+        enqueueUpdate(name, value);
+      }, 750);
+    } else {
+      enqueueUpdate(name, value);
+    }
+  };
 
   const handleResumeUpload = async (e) => {
     const file = e.target.files[0];
@@ -59,6 +208,7 @@ export const EditApplication = () => {
         setResumePath(res.data.resume_path);
         setResumeName(res.data.original_name);
         showToast('Resume uploaded successfully!', 'success');
+        handleFieldChange('resume_version', res.data.resume_path);
       }
     } catch (err) {
       console.error(err);
@@ -68,9 +218,23 @@ export const EditApplication = () => {
     }
   };
 
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm({
+  const { register, control, reset, getValues, trigger, watch, clearErrors, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
   });
+
+  const statusValue = watch('status');
+
+  const isFinalStatus = (status) => {
+    if (!status) return false;
+    const finalStatuses = ['offered', 'rejected', 'withdrawn', 'accepted', 'declined'];
+    return finalStatuses.includes(status.toLowerCase());
+  };
+
+  useEffect(() => {
+    if (isFinalStatus(statusValue)) {
+      clearErrors('interview_date');
+    }
+  }, [statusValue, clearErrors]);
 
   useEffect(() => {
     const fetchApp = async () => {
@@ -78,20 +242,24 @@ export const EditApplication = () => {
         const data = await getApplication(id);
         if (data) {
           const parsed = deserializeNotes(data.notes);
+          let initialResumePath = '';
           if (data.resume_version) {
+            initialResumePath = data.resume_version;
             setResumePath(data.resume_version);
             setResumeName(data.resume_version.split('/').pop());
           }
-          reset({
+          const initialVals = {
             company_name: data.company_name,
             position: data.position,
             status: data.status,
-            location: parsed.location,
-            priority: parsed.priority,
-            resume_version: data.resume_version || '',
+            location: parsed.location || 'Remote',
+            priority: parsed.priority || 'Medium',
+            resume_version: initialResumePath,
             interview_date: data.interview_date ? new Date(data.interview_date).toISOString() : '',
-            notes: parsed.notes,
-          });
+            notes: parsed.notes || '',
+          };
+          lastSavedValuesRef.current = initialVals;
+          reset(initialVals);
         }
       } catch (err) {
         showToast('Error loading application tracker details', 'error');
@@ -103,33 +271,14 @@ export const EditApplication = () => {
     fetchApp();
   }, [id, reset, navigate]);
 
-  const onSubmit = async (data) => {
-    setSubmitting(true);
-    try {
-      const combinedNotes = serializeNotes({
-        location: data.location || 'Remote',
-        priority: data.priority || 'Medium',
-        notes: data.notes || ''
+  useEffect(() => {
+    return () => {
+      if (saveSuccessTimeoutRef.current) clearTimeout(saveSuccessTimeoutRef.current);
+      Object.values(debounceTimeoutRefs.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
       });
-
-      const payload = {
-        company_name: data.company_name,
-        position: data.position,
-        status: data.status,
-        notes: combinedNotes,
-        resume_version: resumePath || data.resume_version || null,
-        interview_date: data.interview_date ? new Date(data.interview_date).toISOString() : null,
-      };
-
-      await updateApplication(id, payload);
-      showToast('Application updated successfully!', 'success');
-      navigate('/applications');
-    } catch (err) {
-      showToast(err.response?.data?.detail || 'Failed to update application', 'error');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -162,14 +311,16 @@ export const EditApplication = () => {
         animate={{ opacity: 1, y: 0 }}
         className="bg-white dark:bg-dark-card border border-gray-100 dark:border-dark-border rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden"
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Company Name"
               name="company_name"
               placeholder="e.g. Google"
               error={errors.company_name}
-              {...register('company_name')}
+              {...register('company_name', {
+                onChange: (e) => handleFieldChange('company_name', e.target.value)
+              })}
             />
 
             <Input
@@ -177,7 +328,9 @@ export const EditApplication = () => {
               name="position"
               placeholder="e.g. Software Engineer Intern"
               error={errors.position}
-              {...register('position')}
+              {...register('position', {
+                onChange: (e) => handleFieldChange('position', e.target.value)
+              })}
             />
           </div>
 
@@ -187,13 +340,23 @@ export const EditApplication = () => {
                 Application Status
               </label>
               <select
-                {...register('status')}
+                {...register('status', {
+                  onChange: (e) => handleFieldChange('status', e.target.value)
+                })}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-sm font-semibold focus:ring-2 focus:ring-primary-500 focus:outline-none"
               >
                 <option value="Applied">Applied</option>
+                <option value="Screening">Screening</option>
+                <option value="Assessment">Assessment</option>
+                <option value="Interview">Interview</option>
                 <option value="Interviewing">Interviewing</option>
+                <option value="Follow-up">Follow-up</option>
+                <option value="In Progress">In Progress</option>
                 <option value="Offered">Offered</option>
                 <option value="Rejected">Rejected</option>
+                <option value="Withdrawn">Withdrawn</option>
+                <option value="Accepted">Accepted</option>
+                <option value="Declined">Declined</option>
               </select>
             </div>
 
@@ -202,7 +365,9 @@ export const EditApplication = () => {
                 Priority
               </label>
               <select
-                {...register('priority')}
+                {...register('priority', {
+                  onChange: (e) => handleFieldChange('priority', e.target.value)
+                })}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-sm font-semibold focus:ring-2 focus:ring-primary-500 focus:outline-none"
               >
                 <option value="Low">Low</option>
@@ -216,7 +381,9 @@ export const EditApplication = () => {
               name="location"
               placeholder="e.g. Remote"
               error={errors.location}
-              {...register('location')}
+              {...register('location', {
+                onChange: (e) => handleFieldChange('location', e.target.value)
+              })}
               icon={<MapPin className="w-4 h-4 text-gray-400" />}
             />
           </div>
@@ -262,8 +429,12 @@ export const EditApplication = () => {
                   label="Interview Date & Time"
                   name="interview_date"
                   value={field.value}
-                  onChange={field.onChange}
+                  onChange={(val) => {
+                    field.onChange(val);
+                    handleFieldChange('interview_date', val);
+                  }}
                   error={errors.interview_date}
+                  disabled={isFinalStatus(statusValue)}
                 />
               )}
             />
@@ -275,7 +446,9 @@ export const EditApplication = () => {
             </label>
             <div className="relative">
               <textarea
-                {...register('notes')}
+                {...register('notes', {
+                  onChange: (e) => handleFieldChange('notes', e.target.value)
+                })}
                 rows="4"
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-sm font-semibold focus:ring-2 focus:ring-primary-500 focus:outline-none resize-none"
               />
@@ -283,21 +456,41 @@ export const EditApplication = () => {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-dark-border">
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-dark-border">
+            <div className="flex items-center gap-2">
+              {saveStatus === 'saving' && (
+                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm font-semibold animate-pulse">
+                  <span className="w-4 h-4 border-2 border-gray-500 dark:border-gray-400 border-t-transparent rounded-full animate-spin"></span>
+                  <span>Saving changes...</span>
+                </div>
+              )}
+              {saveStatus === 'saved' && (
+                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-sm font-bold animate-fade-in">
+                  <span>✔ Changes Saved</span>
+                </div>
+              )}
+              {saveStatus === 'error' && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-rose-500 text-sm font-semibold">
+                    {saveError}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => processSaveQueue()}
+                    className="text-xs text-primary-500 hover:text-primary-600 underline font-bold text-left cursor-pointer"
+                  >
+                    Retry now
+                  </button>
+                </div>
+              )}
+            </div>
+
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate(`/applications/${id}`)}
-              disabled={submitting}
             >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={submitting}
-              icon={submitting ? <Tracky expression="loading" className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-            >
-              {submitting ? 'Saving...' : 'Save Changes'}
+              Back to Application
             </Button>
           </div>
         </form>

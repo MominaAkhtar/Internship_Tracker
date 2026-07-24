@@ -8,6 +8,7 @@ from app.modules.dashboard import service
 from app.modules.dashboard.schemas import (
     DashboardSummary,
     RecentApplication,
+    UpcomingInterview,
 )
 
 router = APIRouter(
@@ -50,7 +51,7 @@ def get_recent_applications(
 # UPCOMING INTERVIEWS
 # ==========================
 
-@router.get("/interviews", response_model=list[RecentApplication])
+@router.get("/interviews", response_model=list[UpcomingInterview])
 def get_upcoming_interviews(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)

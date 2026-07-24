@@ -130,7 +130,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, onOpenNotificationsDrawer
 
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border cursor-pointer transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          className="p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border cursor-pointer transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-white"
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -167,10 +167,10 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, onOpenNotificationsDrawer
             animate={{ opacity: 1 }}
             className="flex flex-col text-left overflow-hidden"
           >
-            <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 truncate leading-none">
+            <span className="text-xs font-semibold text-gray-400 dark:text-gray-300 truncate leading-none">
               {getGreeting()}
             </span>
-            <span className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate mt-0.5">
+            <span className="text-sm font-bold text-gray-800 dark:text-white truncate mt-0.5">
               {user?.name || 'User'}
             </span>
           </motion.div>
@@ -190,8 +190,8 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, onOpenNotificationsDrawer
               onClick={item.onClickAction}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm transition-all relative ${
                 isActive
-                  ? 'text-primary-600 dark:text-white bg-primary-50 dark:bg-primary-950/20'
-                  : 'hover:bg-gray-50 dark:hover:bg-dark-border text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40'
+                  : 'hover:bg-gray-50 dark:hover:bg-dark-border text-gray-500 dark:text-gray-200 hover:text-gray-800 dark:hover:text-white'
               }`}
             >
               {/* Active Indicator Bar */}
@@ -227,7 +227,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, onOpenNotificationsDrawer
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-dark-border cursor-pointer font-semibold text-sm"
+          className="flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-gray-500 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-dark-border cursor-pointer font-semibold text-sm"
           aria-label="Toggle theme mode"
         >
           {theme === 'dark' ? (

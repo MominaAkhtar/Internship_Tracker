@@ -1,21 +1,39 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Clock, Sun, Moon } from 'lucide-react';
 
-/* ── Teal colour scheme (your reference style) ── */
-const COLORS = {
+/* ── Teal colour scheme — light & dark variants ── */
+const LIGHT_COLORS = {
   accent: '#4FB3BF',
   accentDark: '#3FA3AF',
   accentSoft: '#EAF6F7',
-  selection: '#E8F4F6',
-  selectionStrong: '#4FB3BF',
   textDark: '#4A5568',
   textMuted: '#A0AEC0',
   textInactive: '#CBD5E0',
   border: '#E2E8F0',
   hover: '#F7FAFC',
-  white: '#FFFFFF',
+  surface: '#FFFFFF',
+  danger: '#E53E3E',
+  popoverShadow: '0 16px 40px -8px rgba(15,23,42,0.16)',
+  selectedShadow: '0 4px 10px -2px rgba(63,163,175,0.6)',
+  chipShadow: '0 6px 14px -4px rgba(63,163,175,0.5)',
+};
+
+const DARK_COLORS = {
+  accent: '#5FC7D2',
+  accentDark: '#7BD3DC',
+  accentSoft: '#1B3A3E',
+  textDark: '#E2E8F0',
+  textMuted: '#8DA0B3',
+  textInactive: '#4E5F72',
+  border: '#324254',
+  hover: '#25313F',
+  surface: '#1B2530',
+  danger: '#FC8181',
+  popoverShadow: '0 20px 45px -8px rgba(0,0,0,0.55)',
+  selectedShadow: '0 4px 12px -2px rgba(95,199,210,0.45)',
+  chipShadow: '0 6px 16px -4px rgba(95,199,210,0.4)',
 };
 
 const POPOVER_Z_INDEX = 99999;
@@ -38,9 +56,51 @@ export const DateTimePicker = ({
   onChange,
   error,
   required = false,
+  disabled = false,
   className = '',
+  darkMode, // optional controlled override: true/false. Omit to auto-detect.
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  // ── Dark mode detection ──
+  // If `darkMode` prop is supplied, it wins. Otherwise auto-detect from a
+  // `dark` class on <html> (common Tailwind convention) or the OS preference,
+  // and stay in sync if either changes.
+  const getAutoDark = () => {
+    if (typeof document !== 'undefined' && document.documentElement.classList.contains('dark')) return true;
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  };
+
+  const [autoDark, setAutoDark] = useState(getAutoDark);
+
+  useEffect(() => {
+    if (darkMode !== undefined) return undefined;
+    if (typeof window === 'undefined') return undefined;
+
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const sync = () => setAutoDark(getAutoDark());
+
+    mq.addEventListener('change', sync);
+    const observer = new MutationObserver(sync);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => {
+      mq.removeEventListener('change', sync);
+      observer.disconnect();
+    };
+  }, [darkMode]);
+
+  const isDark = darkMode !== undefined ? darkMode : autoDark;
+  const COLORS = isDark ? DARK_COLORS : LIGHT_COLORS;
+
+  useEffect(() => {
+    if (disabled) {
+      setIsOpen(false);
+    }
+  }, [disabled]);
   const [isPositioned, setIsPositioned] = useState(false);
   const [view, setView] = useState('days'); // 'days' | 'months' | 'years'
   const [yearPageStart, setYearPageStart] = useState(START_YEAR);
@@ -296,14 +356,15 @@ export const DateTimePicker = ({
           animate={{ opacity: isPositioned ? 1 : 0, y: isPositioned ? 0 : coords.openUpward ? 8 : -8 }}
           exit={{ opacity: 0, y: coords.openUpward ? 8 : -8 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="w-[340px] rounded-2xl shadow-[0_16px_40px_-8px_rgba(15,23,42,0.16)] select-none text-left max-h-[calc(100vh-24px)] overflow-y-auto"
+          className="w-[340px] rounded-2xl select-none text-left max-h-[calc(100vh-24px)] overflow-y-auto"
           style={{
             position: 'fixed',
             top: coords.top,
             left: coords.left,
             zIndex: POPOVER_Z_INDEX,
-            backgroundColor: COLORS.white,
+            backgroundColor: COLORS.surface,
             border: `1px solid ${COLORS.border}`,
+            boxShadow: COLORS.popoverShadow,
           }}
         >
           <div className="p-5">
@@ -336,8 +397,10 @@ export const DateTimePicker = ({
                     type="button"
                     onClick={handlePrevMonth}
                     aria-label="Previous month"
-                    className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer hover:bg-[#F7FAFC]"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer"
                     style={{ color: COLORS.textMuted }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = COLORS.hover; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
                     <ChevronLeft className="w-4 h-4" strokeWidth={2} />
                   </button>
@@ -346,8 +409,10 @@ export const DateTimePicker = ({
                     <button
                       type="button"
                       onClick={() => setView('months')}
-                      className="px-2 py-1 rounded-md text-[14.5px] font-semibold transition-colors cursor-pointer hover:bg-[#F7FAFC]"
+                      className="px-2 py-1 rounded-md text-[14.5px] font-semibold transition-colors cursor-pointer"
                       style={{ color: COLORS.textDark }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = COLORS.hover; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                     >
                       {MONTHS[month]}
                     </button>
@@ -357,8 +422,10 @@ export const DateTimePicker = ({
                         setYearPageStart(Math.floor(year / 12) * 12);
                         setView('years');
                       }}
-                      className="px-2 py-1 rounded-md text-[14.5px] font-semibold transition-colors cursor-pointer hover:bg-[#F7FAFC]"
+                      className="px-2 py-1 rounded-md text-[14.5px] font-semibold transition-colors cursor-pointer"
                       style={{ color: COLORS.textMuted }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = COLORS.hover; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                     >
                       {year}
                     </button>
@@ -368,8 +435,10 @@ export const DateTimePicker = ({
                     type="button"
                     onClick={handleNextMonth}
                     aria-label="Next month"
-                    className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer hover:bg-[#F7FAFC]"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer"
                     style={{ color: COLORS.textMuted }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = COLORS.hover; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
                     <ChevronRight className="w-4 h-4" strokeWidth={2} />
                   </button>
@@ -410,9 +479,9 @@ export const DateTimePicker = ({
                             className="w-8 h-8 text-[13px] rounded-[10px] cursor-pointer flex flex-col items-center justify-center gap-0.5"
                             style={{
                               backgroundColor: active ? COLORS.accent : 'transparent',
-                              color: active ? COLORS.white : currentMonth ? COLORS.textDark : COLORS.textInactive,
+                              color: active ? COLORS.surface : currentMonth ? COLORS.textDark : COLORS.textInactive,
                               fontWeight: active || today ? 600 : 400,
-                              boxShadow: active ? '0 4px 10px -2px rgba(63,163,175,0.6)' : 'none',
+                              boxShadow: active ? COLORS.selectedShadow : 'none',
                               transition: 'background-color 150ms ease, box-shadow 150ms ease',
                             }}
                             onMouseEnter={(e) => { if (!active) e.currentTarget.style.backgroundColor = COLORS.hover; }}
@@ -472,8 +541,8 @@ export const DateTimePicker = ({
                         className="py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-150 cursor-pointer"
                         style={{
                           backgroundColor: isActive ? COLORS.accent : isCurrent ? COLORS.accentSoft : 'transparent',
-                          color: isActive ? COLORS.white : isCurrent ? COLORS.accentDark : COLORS.textDark,
-                          boxShadow: isActive ? '0 6px 14px -4px rgba(63,163,175,0.5)' : 'none',
+                          color: isActive ? COLORS.surface : isCurrent ? COLORS.accentDark : COLORS.textDark,
+                          boxShadow: isActive ? COLORS.chipShadow : 'none',
                         }}
                         onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = COLORS.hover; }}
                         onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = isCurrent ? COLORS.accentSoft : 'transparent'; }}
@@ -509,8 +578,10 @@ export const DateTimePicker = ({
                     type="button"
                     disabled={yearPageStart <= START_YEAR}
                     onClick={() => setYearPageStart((p) => Math.max(START_YEAR, p - 12))}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer disabled:opacity-30 hover:bg-[#F7FAFC]"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer disabled:opacity-30"
                     style={{ color: COLORS.textMuted }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = COLORS.hover; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -521,8 +592,10 @@ export const DateTimePicker = ({
                     type="button"
                     disabled={yearPageStart + 12 > END_YEAR}
                     onClick={() => setYearPageStart((p) => Math.min(END_YEAR - 11, p + 12))}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer disabled:opacity-30 hover:bg-[#F7FAFC]"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer disabled:opacity-30"
                     style={{ color: COLORS.textMuted }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = COLORS.hover; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -540,8 +613,8 @@ export const DateTimePicker = ({
                         className="py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-150 cursor-pointer"
                         style={{
                           backgroundColor: isActive ? COLORS.accent : isCurrent ? COLORS.accentSoft : 'transparent',
-                          color: isActive ? COLORS.white : isCurrent ? COLORS.accentDark : COLORS.textDark,
-                          boxShadow: isActive ? '0 6px 14px -4px rgba(63,163,175,0.5)' : 'none',
+                          color: isActive ? COLORS.surface : isCurrent ? COLORS.accentDark : COLORS.textDark,
+                          boxShadow: isActive ? COLORS.chipShadow : 'none',
                         }}
                         onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = COLORS.hover; }}
                         onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = isCurrent ? COLORS.accentSoft : 'transparent'; }}
@@ -565,8 +638,10 @@ export const DateTimePicker = ({
                   value={hour}
                   onChange={(e) => handleTimeChange(parseInt(e.target.value, 10), minute, period)}
                   aria-label="Hour"
-                  className="px-3 py-2 rounded-lg border text-[13px] font-medium cursor-pointer focus:outline-none focus:border-[#4FB3BF] bg-white"
-                  style={{ borderColor: COLORS.border, color: COLORS.textDark }}
+                  className="px-3 py-2 rounded-lg border text-[13px] font-medium cursor-pointer focus:outline-none"
+                  style={{ borderColor: COLORS.border, color: COLORS.textDark, backgroundColor: COLORS.surface }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = COLORS.accent; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = COLORS.border; }}
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => (
                     <option key={h} value={h}>{String(h).padStart(2, '0')}</option>
@@ -577,8 +652,10 @@ export const DateTimePicker = ({
                   value={minute}
                   onChange={(e) => handleTimeChange(hour, parseInt(e.target.value, 10), period)}
                   aria-label="Minute"
-                  className="px-3 py-2 rounded-lg border text-[13px] font-medium cursor-pointer focus:outline-none focus:border-[#4FB3BF] bg-white"
-                  style={{ borderColor: COLORS.border, color: COLORS.textDark }}
+                  className="px-3 py-2 rounded-lg border text-[13px] font-medium cursor-pointer focus:outline-none"
+                  style={{ borderColor: COLORS.border, color: COLORS.textDark, backgroundColor: COLORS.surface }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = COLORS.accent; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = COLORS.border; }}
                 >
                   {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
                     <option key={m} value={m}>{String(m).padStart(2, '0')}</option>
@@ -593,7 +670,7 @@ export const DateTimePicker = ({
                       className="px-3 py-2 text-[12px] font-semibold cursor-pointer transition-colors"
                       style={{
                         backgroundColor: period === p ? COLORS.accent : 'transparent',
-                        color: period === p ? COLORS.white : COLORS.textMuted,
+                        color: period === p ? COLORS.surface : COLORS.textMuted,
                       }}
                     >
                       {p}
@@ -617,7 +694,7 @@ export const DateTimePicker = ({
                 type="button"
                 onClick={() => setIsOpen(false)}
                 className="px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors cursor-pointer hover:opacity-90"
-                style={{ color: COLORS.white, backgroundColor: COLORS.accent }}
+                style={{ color: COLORS.surface, backgroundColor: COLORS.accent }}
               >
                 Select
               </button>
@@ -631,8 +708,8 @@ export const DateTimePicker = ({
   return (
     <div className={`flex flex-col gap-1.5 w-full text-left relative ${className}`} ref={containerRef}>
       {label && (
-        <label htmlFor={name} className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-          {label} {required && <span className="text-rose-500">*</span>}
+        <label htmlFor={name} className="text-xs font-semibold uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
+          {label} {required && <span style={{ color: COLORS.danger }}>*</span>}
         </label>
       )}
 
@@ -640,11 +717,15 @@ export const DateTimePicker = ({
         ref={triggerRef}
         id={name}
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        disabled={disabled}
+        onClick={() => { if (!disabled) setIsOpen((prev) => !prev); }}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        className="w-full px-4 py-2.5 rounded-xl border text-sm transition-all duration-150 focus:outline-none flex items-center justify-between text-left select-none cursor-pointer bg-white dark:bg-dark-card"
-        style={{ borderColor: error ? '#FC8181' : isOpen ? COLORS.accent : COLORS.border }}
+        className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all duration-150 focus:outline-none flex items-center justify-between text-left select-none ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        style={{
+          borderColor: error ? COLORS.danger : isOpen ? COLORS.accent : COLORS.border,
+          backgroundColor: COLORS.surface,
+        }}
       >
         <span style={{ color: selectedDate ? COLORS.textDark : COLORS.textMuted }}>
           {formatDisplayString()}
@@ -653,7 +734,7 @@ export const DateTimePicker = ({
       </button>
 
       {error && (
-        <span className="text-xs font-semibold text-rose-500" role="alert">
+        <span className="text-xs font-semibold" style={{ color: COLORS.danger }} role="alert">
           {error.message || error}
         </span>
       )}
@@ -663,4 +744,50 @@ export const DateTimePicker = ({
   );
 };
 
-export default DateTimePicker;
+/* ─────────────────────────────────────────────────────────────
+   Demo wrapper — shown only in this preview so you can see both
+   modes side by side. Import { DateTimePicker } from this file
+   in your own app; you don't need this Demo component.
+   ───────────────────────────────────────────────────────────── */
+function Demo() {
+  const [dark, setDark] = useState(false);
+  const [value, setValue] = useState(null);
+
+  return (
+    <div
+      style={{
+        minHeight: '520px',
+        padding: '48px 24px',
+        backgroundColor: dark ? '#0F1720' : '#F8FAFC',
+        transition: 'background-color 200ms ease',
+      }}
+    >
+      <div style={{ maxWidth: 360, margin: '0 auto' }}>
+        <button
+          type="button"
+          onClick={() => setDark((d) => !d)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] font-semibold mb-6 cursor-pointer transition-colors"
+          style={{
+            color: dark ? '#E2E8F0' : '#4A5568',
+            backgroundColor: dark ? '#1B2530' : '#FFFFFF',
+            border: `1px solid ${dark ? '#324254' : '#E2E8F0'}`,
+          }}
+        >
+          {dark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+          {dark ? 'Dark mode' : 'Light mode'} — click to toggle
+        </button>
+
+        <DateTimePicker
+          label="Interview date & time"
+          name="interview"
+          value={value}
+          onChange={setValue}
+          darkMode={dark}
+          required
+        />
+      </div>
+    </div>
+  );
+}
+
+export default Demo;

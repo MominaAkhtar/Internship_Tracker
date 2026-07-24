@@ -247,8 +247,8 @@ export const Insights = () => {
             {[
               { label: 'Acceptance Ratio', value: `${overview.success_rate}%`, sub: 'Convert rate from total applications', color: 'text-emerald-500', icon: CheckCircle, iconColor: 'text-emerald-500' },
               { label: 'Total Interviews', value: overview.total_interviews, sub: 'Conversations generated', color: 'text-primary-500', icon: null },
-              { label: 'Average Response', value: overview.average_response_time ? `${overview.average_response_time} Days` : 'N/A', sub: 'Avg days to get status updates', color: 'text-amber-500', icon: Timer, iconColor: 'text-amber-500' },
-              { label: 'Peak Active Month', value: overview.most_active_month || 'N/A', sub: 'Month with highest volume', color: 'text-purple-500', icon: null, small: true },
+              { label: 'Average Response', value: overview.average_response_time ? `${overview.average_response_time} Days` : 'No data available', sub: 'Avg days to get status updates', color: 'text-amber-500', icon: Timer, iconColor: 'text-amber-500' },
+              { label: 'Peak Active Month', value: overview.most_active_month || 'No data available', sub: 'Month with highest volume', color: 'text-purple-500', icon: null, small: true },
             ].map((card) => (
               <div
                 key={card.label}

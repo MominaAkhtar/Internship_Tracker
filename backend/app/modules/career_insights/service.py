@@ -39,55 +39,92 @@ def get_career_overview(db: Session, user_id: int):
 
     total_applications = len(applications)
 
-    total_interviews = sum(
+    # Acceptance Ratio: (Offers / Total Applications) * 100
+    accepted_applications = sum(
         1 for app in applications
-        if app.status == "Interview"
+        if app.status and app.status.lower() in ("offered", "offer")
+    )
+    success_rate = (
+        (accepted_applications / total_applications) * 100
+        if total_applications > 0
+        else 0.0
     )
 
+    # Total Interviews: unique applications that reached Interview stage
+    current_interview_apps = {
+        app.id for app in applications
+        if app.status and app.status.lower() in ("interview", "interviewing")
+    }
+    
+    from app.modules.activity.models import ActivityLog, ActivityType
+    activity_logs = db.query(ActivityLog).filter(
+        ActivityLog.user_id == user_id,
+        ActivityLog.action_type == ActivityType.STATUS_CHANGED
+    ).all()
+    logged_interview_apps = {
+        log.application_id for log in activity_logs
+        if log.application_id is not None and log.new_value and log.new_value.lower() in ("interview", "interviewing")
+    }
+    
+    user_app_ids = {app.id for app in applications}
+    final_interview_app_ids = (current_interview_apps.union(logged_interview_apps)).intersection(user_app_ids)
+    total_interviews = len(final_interview_app_ids)
+
+    # Offers and Rejections (Offers should count Offered and Offer case-insensitively)
     total_offers = sum(
         1 for app in applications
-        if app.status == "Offer"
+        if app.status and app.status.lower() in ("offered", "offer")
     )
-
     total_rejections = sum(
         1 for app in applications
-        if app.status == "Rejected"
-    )
-
-    success_rate = (
-        (total_offers / total_applications) * 100
-        if total_applications > 0
-        else 0
+        if app.status and app.status.lower() == "rejected"
     )
 
     # Most Common Status
     if applications:
-        status_counter = Counter(app.status for app in applications)
-        most_common_status = status_counter.most_common(1)[0][0]
+        status_counter = Counter(app.status for app in applications if app.status)
+        most_common_status = status_counter.most_common(1)[0][0] if status_counter else None
     else:
         most_common_status = None
 
-    # Most Active Month
+    # Most Active Month (Peak Active Month)
     if applications:
         month_counter = Counter(
             app.created_at.strftime("%B")
             for app in applications
+            if app.created_at is not None
         )
-        most_active_month = month_counter.most_common(1)[0][0]
+        most_active_month = month_counter.most_common(1)[0][0] if month_counter else None
     else:
         most_active_month = None
 
     # Average Response Time
-    response_times = []
+    app_status_changes = defaultdict(list)
+    for log in activity_logs:
+        if log.application_id:
+            app_status_changes[log.application_id].append(log)
 
+    # Sort status changes for each application by time
+    for app_id in app_status_changes:
+        app_status_changes[app_id].sort(key=lambda x: x.created_at)
+
+    response_times = []
     for app in applications:
-        if app.status != "Applied":
-            response_times.append(
-                (app.updated_at - app.created_at).days
-            )
+        # Only include if progressed beyond initial state
+        if app.id in app_status_changes and len(app_status_changes[app.id]) > 0:
+            first_log = app_status_changes[app.id][0]
+            delta = first_log.created_at - app.created_at
+            days = max(0.0, delta.total_seconds() / 86400.0)
+            response_times.append(days)
+        else:
+            # Fallback for updated application in status other than "Applied"
+            if app.status and app.status.lower() != "applied" and app.updated_at and app.created_at and app.updated_at > app.created_at:
+                delta = app.updated_at - app.created_at
+                days = max(0.0, delta.total_seconds() / 86400.0)
+                response_times.append(days)
 
     average_response_time = (
-        round(sum(response_times) / len(response_times), 2)
+        round(sum(response_times) / len(response_times), 1)
         if response_times
         else None
     )
@@ -138,13 +175,13 @@ def get_status_analysis(db: Session, user_id: int):
                 "for more than 10–14 days."
             )
 
-        elif most_common_status == "Interview":
+        elif most_common_status in ("Interview", "Interviewing"):
             recommendation = (
                 "You have several ongoing interview processes. Focus on interview "
                 "preparation and timely follow-ups."
             )
 
-        elif most_common_status == "Offer":
+        elif most_common_status in ("Offer", "Offered"):
             recommendation = (
                 "Excellent progress! Your applications are converting into offers. "
                 "Continue applying strategically while evaluating your opportunities."
@@ -184,10 +221,10 @@ def get_company_analysis(db: Session, user_id: int):
 
         company["applications"] += 1
 
-        if app.status == "Interview":
+        status_lower = app.status.lower() if app.status else ""
+        if status_lower in ("interview", "interviewing"):
             company["interviews"] += 1
-
-        elif app.status == "Offer":
+        elif status_lower in ("offer", "offered"):
             company["offers"] += 1
 
     companies = []
@@ -254,41 +291,89 @@ def get_company_analysis(db: Session, user_id: int):
 def get_response_time_analysis(db: Session, user_id: int):
     applications = get_user_applications(db, user_id)
 
+    from app.modules.activity.models import ActivityLog, ActivityType
+    status_change_logs = (
+        db.query(ActivityLog)
+        .filter(
+            ActivityLog.user_id == user_id,
+            ActivityLog.action_type == ActivityType.STATUS_CHANGED
+        )
+        .all()
+    )
+    
+    app_status_changes = defaultdict(list)
+    for log in status_change_logs:
+        if log.application_id:
+            app_status_changes[log.application_id].append(log)
+
+    for app_id in app_status_changes:
+        app_status_changes[app_id].sort(key=lambda x: x.created_at)
+
     interview_days = []
     offer_days = []
     rejection_days = []
 
     for app in applications:
-
-        delta = app.updated_at - app.created_at
-
-        # Approximate response time (minimum 1 day)
-        days = max(
-            1,
-            math.ceil(delta.total_seconds() / 86400)
-        )
-
-        if app.status == "Interview":
+        # Interview
+        interview_log = None
+        if app.id in app_status_changes:
+            for log in app_status_changes[app.id]:
+                if log.new_value and log.new_value.lower() in ("interview", "interviewing"):
+                    interview_log = log
+                    break
+        if interview_log:
+            delta = interview_log.created_at - app.created_at
+            days = max(0.0, delta.total_seconds() / 86400.0)
+            interview_days.append(days)
+        elif app.status and app.status.lower() in ("interview", "interviewing") and app.updated_at and app.created_at and app.updated_at > app.created_at:
+            delta = app.updated_at - app.created_at
+            days = max(0.0, delta.total_seconds() / 86400.0)
             interview_days.append(days)
 
-        elif app.status == "Offer":
+        # Offer
+        offer_log = None
+        if app.id in app_status_changes:
+            for log in app_status_changes[app.id]:
+                if log.new_value and log.new_value.lower() in ("offer", "offered"):
+                    offer_log = log
+                    break
+        if offer_log:
+            delta = offer_log.created_at - app.created_at
+            days = max(0.0, delta.total_seconds() / 86400.0)
+            offer_days.append(days)
+        elif app.status and app.status.lower() in ("offer", "offered") and app.updated_at and app.created_at and app.updated_at > app.created_at:
+            delta = app.updated_at - app.created_at
+            days = max(0.0, delta.total_seconds() / 86400.0)
             offer_days.append(days)
 
-        elif app.status == "Rejected":
+        # Rejection
+        rejection_log = None
+        if app.id in app_status_changes:
+            for log in app_status_changes[app.id]:
+                if log.new_value and log.new_value.lower() == "rejected":
+                    rejection_log = log
+                    break
+        if rejection_log:
+            delta = rejection_log.created_at - app.created_at
+            days = max(0.0, delta.total_seconds() / 86400.0)
+            rejection_days.append(days)
+        elif app.status and app.status.lower() == "rejected" and app.updated_at and app.created_at and app.updated_at > app.created_at:
+            delta = app.updated_at - app.created_at
+            days = max(0.0, delta.total_seconds() / 86400.0)
             rejection_days.append(days)
 
     average_interview = (
-        round(sum(interview_days) / len(interview_days), 2)
+        round(sum(interview_days) / len(interview_days), 1)
         if interview_days else None
     )
 
     average_offer = (
-        round(sum(offer_days) / len(offer_days), 2)
+        round(sum(offer_days) / len(offer_days), 1)
         if offer_days else None
     )
 
     average_rejection = (
-        round(sum(rejection_days) / len(rejection_days), 2)
+        round(sum(rejection_days) / len(rejection_days), 1)
         if rejection_days else None
     )
 
@@ -301,17 +386,13 @@ def get_response_time_analysis(db: Session, user_id: int):
     ]
 
     if available:
-
         average = round(sum(available) / len(available))
-
         day_text = "day" if average == 1 else "days"
-
         recommendation = (
             f"Companies usually respond within approximately {average} {day_text}. "
             f"If an application has been pending longer than this, consider "
             f"sending a polite follow-up."
         )
-
     else:
         recommendation = (
             "There is not enough application history yet to estimate response times."

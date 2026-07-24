@@ -168,9 +168,17 @@ export const Applications = () => {
           >
             <option value="All">All Statuses</option>
             <option value="Applied">Applied</option>
+            <option value="Screening">Screening</option>
+            <option value="Assessment">Assessment</option>
+            <option value="Interview">Interview</option>
             <option value="Interviewing">Interviewing</option>
+            <option value="Follow-up">Follow-up</option>
+            <option value="In Progress">In Progress</option>
             <option value="Offered">Offered</option>
             <option value="Rejected">Rejected</option>
+            <option value="Withdrawn">Withdrawn</option>
+            <option value="Accepted">Accepted</option>
+            <option value="Declined">Declined</option>
           </select>
         </div>
 
