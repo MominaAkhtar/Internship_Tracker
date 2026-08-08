@@ -16,22 +16,22 @@ def get_dashboard_summary(db: Session, user_id: int):
 
     applied = db.query(func.count(Application.id)).filter(
         Application.user_id == user_id,
-        Application.status == "Applied"
+        func.lower(Application.status).in_(["applied", "screening"])
     ).scalar()
 
     interview = db.query(func.count(Application.id)).filter(
         Application.user_id == user_id,
-        Application.status == "Interview"
+        func.lower(Application.status).in_(["interview", "interviewing", "assessment", "follow-up", "in progress"])
     ).scalar()
 
     offer = db.query(func.count(Application.id)).filter(
         Application.user_id == user_id,
-        Application.status == "Offer"
+        func.lower(Application.status).in_(["offer", "offered", "accepted"])
     ).scalar()
 
     rejected = db.query(func.count(Application.id)).filter(
         Application.user_id == user_id,
-        Application.status == "Rejected"
+        func.lower(Application.status).in_(["rejected", "declined"])
     ).scalar()
 
     upcoming_interviews = db.query(func.count(Application.id)).filter(
@@ -65,6 +65,7 @@ def get_upcoming_interviews(db: Session, user_id: int):
         db.query(Application)
         .filter(
             Application.user_id == user_id,
+            func.lower(Application.status) == "interview",
             Application.interview_date != None,
             Application.interview_date >= datetime.utcnow()
         )

@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from datetime import timezone
 
 from app.modules.applications.models import Application
 from app.modules.applications.schemas import (
@@ -98,6 +99,57 @@ def get_application(db: Session, app_id: int, user_id: int):
 # =========================
 # UPDATE
 # =========================
+# =========================
+# UPDATE
+# =========================
+def deserialize_notes(raw_notes: str):
+    result = {
+        "location": "Remote",
+        "priority": "Medium",
+        "notes": ""
+    }
+    if not raw_notes:
+        return result
+
+    parts = raw_notes.split(" | ")
+    for part in parts:
+        if part.startswith("Location:"):
+            result["location"] = part.replace("Location:", "").strip() or "Remote"
+        elif part.startswith("Priority:"):
+            result["priority"] = part.replace("Priority:", "").strip() or "Medium"
+        elif part.startswith("Notes:"):
+            result["notes"] = part.replace("Notes:", "").strip()
+
+    # Fallback if the raw notes didn't follow the serialized pattern
+    has_pattern = any(p.startswith("Location:") or p.startswith("Priority:") for p in parts)
+    if not has_pattern:
+        result["notes"] = raw_notes
+
+    return result
+
+
+def dates_equal(old, new):
+    if old is None and new is None:
+        return True
+    if old is None or new is None:
+        return False
+    
+    if new.tzinfo is None:
+        new_aware = new.replace(tzinfo=timezone.utc)
+    else:
+        new_aware = new.astimezone(timezone.utc)
+        
+    old_as_utc = old.replace(tzinfo=timezone.utc)
+    if old_as_utc == new_aware:
+        return True
+        
+    old_as_local = old.astimezone(timezone.utc)
+    if old_as_local == new_aware:
+        return True
+        
+    return False
+
+
 def update_application(
     db: Session,
     app_id: int,
@@ -111,100 +163,177 @@ def update_application(
     # Company Name
     if "company_name" in update_data:
         old = app_obj.company_name
-        app_obj.company_name = update_data["company_name"]
+        new = update_data["company_name"]
+        if old != new:
+            app_obj.company_name = new
 
-        create_activity_log(
-            db,
-            ActivityLogCreate(
-                user_id=user_id,
-                application_id=app_obj.id,
-                action_type=ActivityType.UPDATE_APPLICATION,
-                old_value=old,
-                new_value=app_obj.company_name,
-                description=f"Company changed from '{old}' to '{app_obj.company_name}'"
+            create_activity_log(
+                db,
+                ActivityLogCreate(
+                    user_id=user_id,
+                    application_id=app_obj.id,
+                    action_type=ActivityType.UPDATE_APPLICATION,
+                    old_value=old,
+                    new_value=new,
+                    description=f"Company changed from '{old}' to '{new}'"
+                )
             )
-        )
 
     # Position
     if "position" in update_data:
         old = app_obj.position
-        app_obj.position = update_data["position"]
+        new = update_data["position"]
+        if old != new:
+            app_obj.position = new
 
-        create_activity_log(
-            db,
-            ActivityLogCreate(
-                user_id=user_id,
-                application_id=app_obj.id,
-                action_type=ActivityType.UPDATE_APPLICATION,
-                old_value=old,
-                new_value=app_obj.position,
-                description=f"Position changed from '{old}' to '{app_obj.position}'"
+            create_activity_log(
+                db,
+                ActivityLogCreate(
+                    user_id=user_id,
+                    application_id=app_obj.id,
+                    action_type=ActivityType.UPDATE_APPLICATION,
+                    old_value=old,
+                    new_value=new,
+                    description=f"Position changed from '{old}' to '{new}'"
+                )
             )
-        )
 
-        create_notification(
-            db,
-            NotificationCreate(
-                user_id=user_id,
-                application_id=app_obj.id,
-                title="Application Updated",
-                message=f"Company updated to {app_obj.company_name}.",
-                notification_type=NotificationType.APPLICATION_UPDATED
+            create_notification(
+                db,
+                NotificationCreate(
+                    user_id=user_id,
+                    application_id=app_obj.id,
+                    title="Application Updated",
+                    message=f"Company updated to {app_obj.company_name}.",
+                    notification_type=NotificationType.APPLICATION_UPDATED
+                )
             )
-        )
 
     # Status
     if "status" in update_data:
         old = app_obj.status
-        app_obj.status = update_data["status"]
+        new = update_data["status"]
+        if old != new:
+            app_obj.status = new
 
-        create_activity_log(
-            db,
-            ActivityLogCreate(
-                user_id=user_id,
-                application_id=app_obj.id,
-                action_type=ActivityType.STATUS_CHANGED,
-                old_value=old,
-                new_value=app_obj.status,
-                description=f"Status changed from '{old}' to '{app_obj.status}'"
+            create_activity_log(
+                db,
+                ActivityLogCreate(
+                    user_id=user_id,
+                    application_id=app_obj.id,
+                    action_type=ActivityType.STATUS_CHANGED,
+                    old_value=old,
+                    new_value=new,
+                    description=f"Status changed from '{old}' to '{new}'"
+                )
             )
-        )
 
-        create_notification(
-            db,
-            NotificationCreate(
-                user_id=user_id,
-                application_id=app_obj.id,
-                title="Status Changed",
-                message=f"Status changed to {app_obj.status}.",
-                notification_type=NotificationType.STATUS_CHANGED
+            create_notification(
+                db,
+                NotificationCreate(
+                    user_id=user_id,
+                    application_id=app_obj.id,
+                    title="Status Changed",
+                    message=f"Status changed to {new}.",
+                    notification_type=NotificationType.STATUS_CHANGED
+                )
             )
-        )
 
     # Notes
     if "notes" in update_data:
-        old = app_obj.notes
-        app_obj.notes = update_data["notes"]
+        old_notes_raw = app_obj.notes or ""
+        new_notes_raw = update_data["notes"] or ""
 
-        create_activity_log(
-            db,
-            ActivityLogCreate(
-                user_id=user_id,
-                application_id=app_obj.id,
-                action_type=ActivityType.UPDATE_APPLICATION,
-                old_value=old,
-                new_value=app_obj.notes,
-                description="Updated application notes"
-            )
-        )
+        if old_notes_raw != new_notes_raw:
+            old_parsed = deserialize_notes(old_notes_raw)
+            new_parsed = deserialize_notes(new_notes_raw)
+
+            # Location
+            if old_parsed["location"] != new_parsed["location"]:
+                create_activity_log(
+                    db,
+                    ActivityLogCreate(
+                        user_id=user_id,
+                        application_id=app_obj.id,
+                        action_type=ActivityType.UPDATE_APPLICATION,
+                        old_value=old_parsed["location"],
+                        new_value=new_parsed["location"],
+                        description=f"Location changed from '{old_parsed['location']}' to '{new_parsed['location']}'"
+                    )
+                )
+
+            # Priority
+            if old_parsed["priority"] != new_parsed["priority"]:
+                create_activity_log(
+                    db,
+                    ActivityLogCreate(
+                        user_id=user_id,
+                        application_id=app_obj.id,
+                        action_type=ActivityType.UPDATE_APPLICATION,
+                        old_value=old_parsed["priority"],
+                        new_value=new_parsed["priority"],
+                        description=f"Priority changed from '{old_parsed['priority']}' to '{new_parsed['priority']}'"
+                    )
+                )
+
+            # Notes text
+            if old_parsed["notes"] != new_parsed["notes"]:
+                create_activity_log(
+                    db,
+                    ActivityLogCreate(
+                        user_id=user_id,
+                        application_id=app_obj.id,
+                        action_type=ActivityType.UPDATE_APPLICATION,
+                        old_value=old_parsed["notes"] if old_parsed["notes"] else "None",
+                        new_value=new_parsed["notes"] if new_parsed["notes"] else "None",
+                        description="Updated application notes"
+                    )
+                )
+
+            app_obj.notes = new_notes_raw
 
     # Resume Version
     if "resume_version" in update_data:
-        app_obj.resume_version = update_data["resume_version"]
-
+        old = app_obj.resume_version
+        new = update_data["resume_version"]
+        if old != new:
+            app_obj.resume_version = new
+            old_name = old.split('/')[-1] if old else "None"
+            new_name = new.split('/')[-1] if new else "None"
+            create_activity_log(
+                db,
+                ActivityLogCreate(
+                    user_id=user_id,
+                    application_id=app_obj.id,
+                    action_type=ActivityType.UPDATE_APPLICATION,
+                    old_value=old_name,
+                    new_value=new_name,
+                    description="Updated resume"
+                )
+            )
     # Interview Date
     if "interview_date" in update_data:
-        app_obj.interview_date = update_data["interview_date"]
+        old = app_obj.interview_date
+        new = update_data["interview_date"]
+
+        # Check if they are different
+        is_diff = not dates_equal(old, new)
+
+        if is_diff:
+            app_obj.interview_date = new
+            old_str = old.strftime("%B %d, %Y at %I:%M %p") if old else "None"
+            new_str = new.strftime("%B %d, %Y at %I:%M %p") if new else "None"
+            create_activity_log(
+                db,
+                ActivityLogCreate(
+                    user_id=user_id,
+                    application_id=app_obj.id,
+                    action_type=ActivityType.UPDATE_APPLICATION,
+                    old_value=old_str,
+                    new_value=new_str,
+                    description="Interview Date changed"
+                )
+            )
 
     db.commit()
     db.refresh(app_obj)

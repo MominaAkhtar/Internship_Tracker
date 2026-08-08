@@ -101,7 +101,7 @@ export const Dashboard = () => {
   ].filter(item => item.value > 0);
 
   const statCards = [
-    { label: 'Total Apps', value: summary.total_applications, color: 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 border-primary-100 dark:border-primary-950' },
+    { label: 'Total Applications', value: summary.total_applications, color: 'bg-primary-50 dark:bg-primary-950/20 text-primary-600 border-primary-100 dark:border-primary-950' },
     { label: 'Applied', value: summary.applied, color: 'bg-brand-muted/10 text-brand-muted border-brand-muted/20' },
     { label: 'Interviews', value: summary.interview, color: 'bg-amber-50 dark:bg-amber-950/20 text-amber-500 border-amber-100 dark:border-amber-950' },
     { label: 'Offers', value: summary.offer, color: 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-950' },
@@ -227,9 +227,17 @@ export const Dashboard = () => {
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-sm font-semibold focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="Applied">Applied</option>
+                  <option value="Screening">Screening</option>
+                  <option value="Assessment">Assessment</option>
+                  <option value="Interview">Interview</option>
                   <option value="Interviewing">Interviewing</option>
+                  <option value="Follow-up">Follow-up</option>
+                  <option value="In Progress">In Progress</option>
                   <option value="Offered">Offered</option>
                   <option value="Rejected">Rejected</option>
+                  <option value="Withdrawn">Withdrawn</option>
+                  <option value="Accepted">Accepted</option>
+                  <option value="Declined">Declined</option>
                 </select>
               </div>
               
@@ -329,7 +337,10 @@ export const Dashboard = () => {
                         {item.company_name}
                       </p>
                       <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-2">
-                        {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                       {new Date(item.interview_date).toLocaleString(undefined, {
+  day: '2-digit', month: 'short', year: 'numeric',
+  hour: 'numeric', minute: '2-digit'
+})}
                       </span>
                     </div>
                   </div>

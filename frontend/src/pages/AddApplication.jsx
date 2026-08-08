@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -66,7 +66,7 @@ export const AddApplication = () => {
     }
   };
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm({
+  const { register, handleSubmit, control, watch, clearErrors, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       status: 'Applied',
@@ -75,6 +75,20 @@ export const AddApplication = () => {
       interview_date: '',
     }
   });
+
+  const statusValue = watch('status');
+
+  const isFinalStatus = (status) => {
+    if (!status) return false;
+    const finalStatuses = ['offered', 'rejected', 'withdrawn', 'accepted', 'declined'];
+    return finalStatuses.includes(status.toLowerCase());
+  };
+
+  useEffect(() => {
+    if (isFinalStatus(statusValue)) {
+      clearErrors('interview_date');
+    }
+  }, [statusValue, clearErrors]);
 
   const onSubmit = async (data) => {
     setSubmitting(true);
@@ -153,9 +167,17 @@ export const AddApplication = () => {
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-sm font-semibold focus:ring-2 focus:ring-primary-500 focus:outline-none"
               >
                 <option value="Applied">Applied</option>
+                <option value="Screening">Screening</option>
+                <option value="Assessment">Assessment</option>
+                <option value="Interview">Interview</option>
                 <option value="Interviewing">Interviewing</option>
+                <option value="Follow-up">Follow-up</option>
+                <option value="In Progress">In Progress</option>
                 <option value="Offered">Offered</option>
                 <option value="Rejected">Rejected</option>
+                <option value="Withdrawn">Withdrawn</option>
+                <option value="Accepted">Accepted</option>
+                <option value="Declined">Declined</option>
               </select>
             </div>
 
@@ -226,6 +248,7 @@ export const AddApplication = () => {
                   value={field.value}
                   onChange={field.onChange}
                   error={errors.interview_date}
+                  disabled={isFinalStatus(statusValue)}
                 />
               )}
             />
